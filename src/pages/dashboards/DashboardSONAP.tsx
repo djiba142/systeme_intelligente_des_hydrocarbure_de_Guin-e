@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Ship,
-  Droplets,
-  AlertTriangle,
-  TrendingUp,
   Package,
   Globe,
   BarChart3,
   Clock,
   CheckCircle2,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -26,6 +24,9 @@ import { Link } from 'react-router-dom';
 import { useRealtimeStations } from '@/hooks/useRealtimeStations';
 import { useRealtimeAlertes } from '@/hooks/useRealtimeAlertes';
 
+// Définition des types pour éviter le "any"
+type StationType = 'urbaine' | 'autoroute' | 'portuaire' | 'depot';
+type StationStatus = 'active' | 'en_travaux' | 'fermee' | 'alerte';
 
 interface Importation {
   id: string;
@@ -38,15 +39,20 @@ interface Importation {
   statut: string;
 }
 
+interface StockAccumulator {
+  essence: number;
+  gasoil: number;
+  gpl: number;
+}
+
 export default function DashboardSONAP() {
   const [importations, setImportations] = useState<Importation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Realtime hooks
-  const { stations: realtimeStations, loading: stationsLoading, refetch: refetchStations } = useRealtimeStations();
-  const { alertes, criticalCount, warningCount } = useRealtimeAlertes({ showToast: true });
+  const { stations: realtimeStations, refetch: refetchStations } = useRealtimeStations();
+  // Note: On garde alertes, criticalCount, warningCount si tu souhaites les utiliser plus bas
+  useRealtimeAlertes({ showToast: true });
 
-  // Convert realtime stations to map format (from Supabase)
   const mapStations = realtimeStations.map(s => ({
     id: s.id,
     nom: s.nom,
@@ -54,34 +60,32 @@ export default function DashboardSONAP() {
     ville: s.ville,
     region: s.region,
     adresse: s.adresse,
-    type: s.type as any,
-    statut: s.statut as any,
+    type: s.type as StationType,
+    statut: s.statut as StationStatus,
     entrepriseId: s.entreprise_id,
     entrepriseNom: '',
     coordonnees: s.latitude && s.longitude ? { lat: s.latitude, lng: s.longitude } : undefined,
-    stockActuel: { essence: s.stock_essence, gasoil: s.stock_gasoil, gpl: s.stock_gpl, lubrifiants: s.stock_lubrifiants },
-    capacite: { essence: s.capacite_essence, gasoil: s.capacite_gasoil, gpl: s.capacite_gpl, lubrifiants: s.capacite_lubrifiants },
-    gestionnaire: { nom: s.gestionnaire_nom || '', telephone: s.gestionnaire_telephone || '', email: '' },
-    nombrePompes: s.nombre_pompes,
+    stockActuel: { 
+      essence: s.stock_essence || 0, 
+      gasoil: s.stock_gasoil || 0, 
+      gpl: s.stock_gpl || 0, 
+      lubrifiants: s.stock_lubrifiants || 0 
+    },
+    capacite: { 
+      essence: s.capacite_essence || 0, 
+      gasoil: s.capacite_gasoil || 0, 
+      gpl: s.capacite_gpl || 0, 
+      lubrifiants: s.capacite_lubrifiants || 0 
+    },
+    gestionnaire: { 
+      nom: s.gestionnaire_nom || '', 
+      telephone: s.gestionnaire_telephone || '', 
+      email: '' 
+    },
+    nombrePompes: s.nombre_pompes || 0,
   }));
 
-  useEffect(() => {
-    fetchImportations();
-
-    // Subscribe to importations realtime
-    const channel = supabase
-      .channel('importations-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'importations' }, () => {
-        fetchImportations();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchImportations = async () => {
+  const fetchImportations = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('importations')
@@ -95,7 +99,22 @@ export default function DashboardSONAP() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchImportations();
+
+    const channel = supabase
+      .channel('importations-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'importations' }, () => {
+        fetchImportations();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchImportations]);
 
   const getStatusColor = (statut: string) => {
     switch (statut) {
@@ -109,14 +128,14 @@ export default function DashboardSONAP() {
   };
 
   const getStatusLabel = (statut: string) => {
-    switch (statut) {
-      case 'planifie': return 'Planifié';
-      case 'en_route': return 'En route';
-      case 'au_port': return 'Au port';
-      case 'dechargement': return 'Déchargement';
-      case 'termine': return 'Terminé';
-      default: return statut;
-    }
+    const labels: Record<string, string> = {
+      planifie: 'Planifié',
+      en_route: 'En route',
+      au_port: 'Au port',
+      dechargement: 'Déchargement',
+      termine: 'Terminé'
+    };
+    return labels[statut] || statut;
   };
 
   const calculateETA = (dateArrivee: string | null) => {
@@ -132,21 +151,18 @@ export default function DashboardSONAP() {
     return `${diffDays} jours`;
   };
 
-  // Constantes de consommation journalière estimée (en litres)
   const CONSOMMATION_JOURNALIERE = {
     essence: 800000,
     gasoil: 1200000,
     gpl: 100000,
   };
 
-  // Calcul des stocks nationaux en temps réel
-  const stockNational = realtimeStations.reduce((acc, station) => ({
+  const stockNational = realtimeStations.reduce<StockAccumulator>((acc, station) => ({
     essence: acc.essence + (station.stock_essence || 0),
     gasoil: acc.gasoil + (station.stock_gasoil || 0),
     gpl: acc.gpl + (station.stock_gpl || 0),
   }), { essence: 0, gasoil: 0, gpl: 0 });
 
-  // Calcul de l'autonomie (en jours)
   const autonomie = {
     essence: Math.round(stockNational.essence / CONSOMMATION_JOURNALIERE.essence),
     gasoil: Math.round(stockNational.gasoil / CONSOMMATION_JOURNALIERE.gasoil),
@@ -157,7 +173,6 @@ export default function DashboardSONAP() {
       title="Dashboard SONAP"
       subtitle="Suivi des importations et autonomie nationale"
     >
-      {/* Compteurs de Survie */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <NationalAutonomyGauge daysRemaining={autonomie.essence || 0} fuelType="essence" />
         <NationalAutonomyGauge daysRemaining={autonomie.gasoil || 0} fuelType="gasoil" />
@@ -177,9 +192,7 @@ export default function DashboardSONAP() {
         />
       </div>
 
-      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Carte de vigilance */}
         <div className="lg:col-span-2">
           <Card className="h-full">
             <CardHeader className="pb-2">
@@ -189,9 +202,7 @@ export default function DashboardSONAP() {
                     <Globe className="h-5 w-5 text-primary" />
                     Carte de Vigilance
                   </CardTitle>
-                  <CardDescription>
-                    Niveau des stocks par région
-                  </CardDescription>
+                  <CardDescription>Niveau des stocks par région</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => refetchStations()}>
@@ -208,55 +219,35 @@ export default function DashboardSONAP() {
             </CardContent>
           </Card>
         </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Ship className="h-5 w-5 text-primary" />
               Pipeline Maritime
             </CardTitle>
-            <CardDescription>
-              Cargaisons en cours et prévues
-            </CardDescription>
+            <CardDescription>Cargaisons en cours et prévues</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Chargement...
-              </div>
-            ) : importations.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Aucune importation en cours
-              </div>
+              <div className="text-center py-8 text-muted-foreground italic">Chargement...</div>
+            ) : importations.filter(i => i.statut !== 'termine').length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">Aucune importation en cours</div>
             ) : (
               importations.filter(i => i.statut !== 'termine').slice(0, 5).map((imp) => (
-                <div
-                  key={imp.id}
-                  className="p-4 rounded-xl bg-secondary/50 border border-border"
-                >
+                <div key={imp.id} className="p-4 rounded-xl bg-secondary/50 border border-border">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold">{imp.navire_nom}</span>
-                    <Badge className={getStatusColor(imp.statut)}>
-                      {getStatusLabel(imp.statut)}
-                    </Badge>
+                    <Badge className={getStatusColor(imp.statut)}>{getStatusLabel(imp.statut)}</Badge>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Cargaison</span>
-                      <span className="font-medium">
-                        {imp.quantite_tonnes.toLocaleString()} T de {imp.carburant}
-                      </span>
+                      <span className="font-medium">{imp.quantite_tonnes.toLocaleString()} T de {imp.carburant}</span>
                     </div>
-                    {imp.port_origine && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Origine</span>
-                        <span>{imp.port_origine}</span>
-                      </div>
-                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">ETA</span>
-                      <span className="font-medium text-primary">
-                        {calculateETA(imp.date_arrivee_prevue)}
-                      </span>
+                      <span className="font-medium text-primary">{calculateETA(imp.date_arrivee_prevue)}</span>
                     </div>
                   </div>
                 </div>
@@ -266,20 +257,15 @@ export default function DashboardSONAP() {
         </Card>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <StockEvolutionChart title="Évolution des Stocks Nationaux" />
-
-        {/* Comparatif Distributeurs */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" />
               Performance Distributeurs
             </CardTitle>
-            <CardDescription>
-              Volume stocké vs capacité par entreprise
-            </CardDescription>
+            <CardDescription>Volume stocké vs capacité par entreprise</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {[
@@ -292,21 +278,15 @@ export default function DashboardSONAP() {
               <div key={index}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium">{dist.nom}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {dist.stock}k / {dist.capacite}k L
-                  </span>
+                  <span className="text-xs text-muted-foreground">{dist.stock}k / {dist.capacite}k L</span>
                 </div>
-                <Progress
-                  value={(dist.stock / dist.capacite) * 100}
-                  className="h-2"
-                />
+                <Progress value={(dist.stock / dist.capacite) * 100} className="h-2" />
               </div>
             ))}
           </CardContent>
         </Card>
       </div>
 
-      {/* Alerts Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -315,9 +295,7 @@ export default function DashboardSONAP() {
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
                 Alertes Prix et Fraude
               </CardTitle>
-              <CardDescription>
-                Écarts de prix détectés par rapport au tarif officiel
-              </CardDescription>
+              <CardDescription>Écarts de prix détectés par rapport au tarif officiel</CardDescription>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link to="/alertes">Voir tout</Link>
@@ -333,26 +311,17 @@ export default function DashboardSONAP() {
             ].map((alerte, index) => (
               <div
                 key={index}
-                className={`p-4 rounded-lg border ${alerte.status === 'non_resolu'
-                  ? 'bg-red-50 border-red-200'
-                  : alerte.status === 'en_cours'
-                    ? 'bg-amber-50 border-amber-200'
-                    : 'bg-green-50 border-green-200'
-                  }`}
+                className={`p-4 rounded-lg border ${
+                  alerte.status === 'non_resolu' ? 'bg-red-50 border-red-200' : 
+                  alerte.status === 'en_cours' ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'
+                }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium">{alerte.station}</span>
-                  {alerte.status === 'resolu' ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  ) : alerte.status === 'en_cours' ? (
-                    <Clock className="h-5 w-5 text-amber-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-500" />
-                  )}
+                  {alerte.status === 'resolu' ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : 
+                   alerte.status === 'en_cours' ? <Clock className="h-5 w-5 text-amber-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
                 </div>
-                <p className="text-sm">
-                  Écart: <span className="font-semibold text-red-600">{alerte.ecart}</span>
-                </p>
+                <p className="text-sm">Écart: <span className="font-semibold text-red-600">{alerte.ecart}</span></p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {alerte.status === 'resolu' ? 'Résolu' : alerte.status === 'en_cours' ? 'Inspecteur envoyé' : 'Action requise'}
                 </p>

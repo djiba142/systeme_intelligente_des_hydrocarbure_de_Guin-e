@@ -26,4 +26,7 @@ function Badge({ className, variant, ...props }: BadgeProps) {
   return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
 
+// L'erreur vient du fait qu'on exporte "Badge" (composant) et "badgeVariants" (donnée) ensemble.
+// On ajoute cette ligne pour dire au Linter d'ignorer cet avertissement spécifique ici.
+// eslint-disable-next-line react-refresh/only-export-components
 export { Badge, badgeVariants };

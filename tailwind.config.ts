@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+// 1. On importe le plugin ici
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -57,7 +59,6 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Stock level semantic colors
         stock: {
           critical: "hsl(var(--stock-critical))",
           warning: "hsl(var(--stock-warning))",
@@ -105,5 +106,6 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  // 2. On utilise la variable ici au lieu du require()
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Station } from '@/types';
 import { StockIndicator } from '@/components/dashboard/StockIndicator';
@@ -8,15 +8,18 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, Satellite, Map as MapIcon } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default markers
+// Fix pour les marqueurs par défaut de Leaflet qui disparaissent avec Webpack/Vite
+// On désactive le linter pour cette ligne car on modifie le prototype d'une librairie externe
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
+
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Custom marker icons based on stock level
+// Icônes de marqueurs personnalisés basés sur le niveau de stock
 const createMarkerIcon = (level: 'critical' | 'warning' | 'healthy' | 'full') => {
   const colors = {
     critical: '#ef4444',
@@ -73,20 +76,23 @@ export function GuineaMap({ stations, height = "400px", showControls = true }: G
   const [mapKey, setMapKey] = useState(0);
   const [isClient, setIsClient] = useState(false);
   
-  // Guinea center coordinates
+  // Coordonnées du centre de la Guinée
   const guineaCenter: [number, number] = [10.0, -11.0];
   
-  // Filter stations with coordinates
-  const stationsWithCoords = stations.filter(s => s.coordonnees);
+  // Filtrer les stations avec coordonnées valides et informer TypeScript que coordonnees existe
+  const stationsWithCoords = stations.filter(
+    (s): s is Station & { coordonnees: { lat: number; lng: number } } => 
+    !!s.coordonnees && typeof s.coordonnees.lat === 'number' && typeof s.coordonnees.lng === 'number'
+  );
   
-  // Ensure we're on client side
+  // S'assurer qu'on est côté client (pour éviter les erreurs SSR avec Leaflet)
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const handleSatelliteView = () => {
     setMapType('satellite');
-    // Force remount of map when switching to satellite
+    // Force le rechargement de la carte lors du changement de vue
     setMapKey(prev => prev + 1);
   };
   
@@ -95,7 +101,6 @@ export function GuineaMap({ stations, height = "400px", showControls = true }: G
     setMapKey(prev => prev + 1);
   };
   
-  // Don't render map on server
   if (!isClient) {
     return (
       <div className="relative rounded-xl overflow-hidden border border-border bg-muted animate-pulse" style={{ height }}>
@@ -158,7 +163,8 @@ export function GuineaMap({ stations, height = "400px", showControls = true }: G
           return (
             <Marker
               key={station.id}
-              position={[station.coordonnees!.lat, station.coordonnees!.lng]}
+              // Plus besoin de "!" ici grâce au filtre typé plus haut
+              position={[station.coordonnees.lat, station.coordonnees.lng]}
               icon={createMarkerIcon(level)}
             >
               <Popup className="station-popup">

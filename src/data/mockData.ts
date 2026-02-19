@@ -430,7 +430,7 @@ export const prixOfficiels = {
 // Function to get enterprise logo by ID or sigle
 export function getEnterpriseLogo(entrepriseId: string): string | undefined {
   // First try by ID
-  let entreprise = mockEntreprises.find(e => e.id === entrepriseId);
+  const entreprise = mockEntreprises.find(e => e.id === entrepriseId);
   if (entreprise?.logo) return entreprise.logo;
   
   // If not found or no logo, return undefined - will fallback to initials

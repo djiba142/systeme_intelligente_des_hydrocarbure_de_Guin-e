@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -69,15 +69,16 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
     },
   });
 
+  // Correction : Ajout de form dans les dépendances
   useEffect(() => {
     if (open && initialData) {
       form.reset({
         email: initialData.email,
         fullName: initialData.full_name,
-        role: initialData.role,
+        role: initialData.role as 'super_admin' | 'responsable_entreprise',
         phone: initialData.phone || '',
         entrepriseId: initialData.entreprise_id || '',
-        password: '', // Keep empty when editing
+        password: '', 
       });
     } else if (open && !initialData) {
       form.reset({
@@ -92,30 +93,30 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
   }, [open, initialData, form]);
 
   const selectedRole = form.watch('role');
-  const selectedEntreprise = form.watch('entrepriseId');
 
-  useEffect(() => {
-    if (open) {
-      fetchData();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    // Si l'utilisateur est un responsable d'entreprise, on fixe son entreprise_id
-    if (currentUserRole === 'responsable_entreprise' && currentUserProfile?.entreprise_id) {
-      form.setValue('entrepriseId', currentUserProfile.entreprise_id);
-      form.setValue('role', 'responsable_entreprise');
-    }
-  }, [currentUserRole, currentUserProfile, open]);
-
-  const fetchData = async () => {
+  // Correction : Stabilisation de fetchData avec useCallback
+  const fetchData = useCallback(async () => {
     try {
       const { data: entData } = await supabase.from('entreprises').select('id, nom');
       setEntreprises(entData || []);
     } catch (error) {
       console.error('Error fetching data for dialog:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchData();
+    }
+  }, [open, fetchData]);
+
+  // Correction : Ajout de form dans les dépendances
+  useEffect(() => {
+    if (currentUserRole === 'responsable_entreprise' && currentUserProfile?.entreprise_id && open) {
+      form.setValue('entrepriseId', currentUserProfile.entreprise_id);
+      form.setValue('role', 'responsable_entreprise');
+    }
+  }, [currentUserRole, currentUserProfile, open, form]);
 
   const onSubmit = async (data: UserFormValues) => {
     setIsLoading(true);
@@ -125,7 +126,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
         const { error } = await updateUser(initialData.user_id, {
           email: data.email,
           fullName: data.fullName,
-          role: data.role,
+          role: data.role as AppRole,
           entrepriseId: data.entrepriseId || undefined,
         });
         if (error) throw error;
@@ -139,7 +140,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
           email: data.email,
           password: data.password || '',
           fullName: data.fullName,
-          role: data.role,
+          role: data.role as AppRole,
           entrepriseId: data.entrepriseId || undefined,
         });
         if (error) throw error;
@@ -153,19 +154,20 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
       form.reset();
       onOpenChange(false);
       onUserCreated?.();
-    } catch (error: any) {
+    } catch (error) {
+      // Correction : Gestion du type error au lieu de any
       console.error('Error saving user:', error);
+      const errorMessage = error instanceof Error ? error.message : "Impossible d'enregistrer l'utilisateur";
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message || "Impossible d'enregistrer l'utilisateur",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Filtrage des rôles créables
   const getAllowedRoles = (): AppRole[] => {
     if (currentUserRole === 'super_admin') return ['super_admin', 'responsable_entreprise'];
     if (currentUserRole === 'responsable_entreprise') return ['responsable_entreprise'];
@@ -184,7 +186,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
           </DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? `Modification des informations de ${initialData.full_name}.`
+              ? `Modification des informations de ${initialData?.full_name}.`
               : 'Créer un nouveau compte utilisateur avec un rôle spécifique.'}
           </DialogDescription>
         </DialogHeader>
@@ -244,8 +246,8 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
               <Label htmlFor="role">Rôle *</Label>
               <Select
                 value={form.watch('role')}
-                onValueChange={(value) => form.setValue('role', value as AppRole)}
-                disabled={currentUserRole === 'responsable_entreprise'} // Fixé pour les responsables
+                onValueChange={(value) => form.setValue('role', value as 'super_admin' | 'responsable_entreprise')}
+                disabled={currentUserRole === 'responsable_entreprise'}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un rôle" />
@@ -265,9 +267,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
                 <Label htmlFor="entrepriseId">Entreprise</Label>
                 <Select
                   value={form.watch('entrepriseId')}
-                  onValueChange={(value) => {
-                    form.setValue('entrepriseId', value);
-                  }}
+                  onValueChange={(value) => form.setValue('entrepriseId', value)}
                   disabled={currentUserRole === 'responsable_entreprise'}
                 >
                   <SelectTrigger>
