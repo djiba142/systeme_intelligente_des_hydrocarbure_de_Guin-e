@@ -10,7 +10,6 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
-    preTransformRequests: ["node_modules/.vite/"]
   },
   plugins: [react()],
   resolve: {
@@ -30,12 +29,11 @@ export default defineConfig({
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-query": ["@tanstack/react-query"],
-          "vendor-charts": ["recharts", "leaflet", "@react-leaflet/core"],
         },
         chunkFileNames: "chunks/[name]-[hash].js",
         entryFileNames: "js/[name]-[hash].js",
         assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split(".");
+          const info = (assetInfo.name || '').split(".");
           const ext = info[info.length - 1];
           if (/png|jpe?g|gif|svg/.test(ext)) {
             return "images/[name]-[hash][extname]";
@@ -49,7 +47,7 @@ export default defineConfig({
     // Increase chunk size warning limit
     chunkSizeWarningLimit: 1000,
   },
-  // Optimizations
+  // Optimizations for faster dev startup
   optimizeDeps: {
     include: [
       "react",
@@ -57,6 +55,11 @@ export default defineConfig({
       "react-router-dom",
       "@supabase/supabase-js",
       "@tanstack/react-query",
+      "lucide-react",
+      "recharts",
+      "zod",
+      "react-hook-form",
+      "@hookform/resolvers/zod",
     ],
     exclude: ["@tanstack/react-query-devtools"],
   },

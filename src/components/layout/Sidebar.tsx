@@ -15,7 +15,13 @@ import {
   Truck,
   Info,
   Shield,
-  FileCheck
+  FileCheck,
+  Eye,
+  BarChart3,
+  FolderOpen,
+  Terminal,
+  ClipboardList,
+  Monitor
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { cn } from '@/lib/utils';
@@ -30,23 +36,38 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
+  // Super Admin
   { name: 'Dashboard National', href: '/dashboard/admin', icon: LayoutDashboard, roles: ['super_admin'] },
-  { name: 'Carte Nationale', href: '/carte', icon: Map, roles: ['super_admin', 'responsable_entreprise'] },
-  { name: 'Entreprises', href: '/entreprises', icon: Building2, roles: ['super_admin'] },
-  { name: 'Stations', href: '/stations', icon: Fuel, roles: ['super_admin', 'responsable_entreprise'] },
-  { name: 'Alertes', href: '/alertes', icon: AlertTriangle, badge: 4, roles: ['super_admin'] },
+
+  // Inspecteur / Admin État
+  { name: 'Dashboard Inspecteur', href: '/dashboard/inspecteur', icon: Eye, roles: ['inspecteur', 'admin_etat'] },
+
+  // Analyste
+  { name: 'Dashboard Analyste', href: '/dashboard/analyste', icon: BarChart3, roles: ['analyste'] },
+
+  // Personnel Admin
+  { name: 'Espace Administratif', href: '/dashboard/personnel-admin', icon: FolderOpen, roles: ['personnel_admin'] },
+
+  // Service IT
+  { name: 'Console IT', href: '/dashboard/service-it', icon: Terminal, roles: ['service_it'] },
+
+  // Partagé
+  { name: 'Carte Nationale', href: '/carte', icon: Map, roles: ['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise'] },
+  { name: 'Entreprises', href: '/entreprises', icon: Building2, roles: ['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'personnel_admin'] },
+  { name: 'Stations', href: '/stations', icon: Fuel, roles: ['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise', 'gestionnaire_station'] },
+  { name: 'Alertes', href: '/alertes', icon: AlertTriangle, roles: ['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise'] },
   { name: 'Commandes', href: '/admin/commandes', icon: Truck, roles: ['super_admin'] },
-  { name: 'Rapports', href: '/rapports', icon: FileText, roles: ['super_admin', 'responsable_entreprise'] },
+  { name: 'Rapports', href: '/rapports', icon: FileText, roles: ['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise'] },
   { name: 'À Propos', href: '/a-propos', icon: Info }, // Visible to all
 ];
 
 const dashboardNavigation: NavItem[] = [
-  { name: 'Mon Entreprise', href: '/dashboard/entreprise', icon: Building2, roles: ['responsable_entreprise'] },
+  { name: 'Mon Entreprise', href: '/dashboard/entreprise', icon: Building2, roles: ['responsable_entreprise', 'gestionnaire_station'] },
 ];
 
 const adminNavigation: NavItem[] = [
-  { name: 'Utilisateurs', href: '/utilisateurs', icon: Users, roles: ['super_admin'] },
-  { name: 'Audit', href: '/audit', icon: FileCheck, roles: ['super_admin'] },
+  { name: 'Utilisateurs', href: '/utilisateurs', icon: Users, roles: ['super_admin', 'service_it'] },
+  { name: 'Audit', href: '/audit', icon: FileCheck, roles: ['super_admin', 'service_it'] },
   { name: 'Paramètres', href: '/parametres', icon: Settings, roles: ['super_admin'] },
 ];
 

@@ -50,7 +50,7 @@ export default function MentionsLegalesPage() {
                             L'ensemble de ce site relève de la législation guinéenne et internationale sur le droit d'auteur et la propriété intellectuelle. Tous les droits de reproduction sont réservés, y compris pour les documents téléchargeables et les représentations iconographiques et photographiques.
                         </p>
                         <p>
-                            La marque NEXUS Petroleum et le logo SIHG sont la propriété exclusive de l'État guinéen.
+                            La marque SONAP et le logo SIHG sont la propriété exclusive de l'État guinéen.
                         </p>
                     </section>
 

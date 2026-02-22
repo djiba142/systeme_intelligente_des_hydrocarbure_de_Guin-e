@@ -121,31 +121,26 @@ export default function RapportsPage() {
 
   // Helper functions to fetch data
   const fetchStockData = async () => {
-    // 1. Fetch Entreprises
+    // 1 & 2. Fetch Entreprises and Stations in parallel
     let orgQuery = supabase.from('entreprises').select('id, nom, sigle');
+    let stationsQuery = supabase.from('stations').select('id, entreprise_id, stock_essence, stock_gasoil, statut');
 
     // Auth Filtering
     if (profile?.entreprise_id) {
       orgQuery = orgQuery.eq('id', profile.entreprise_id);
-    }
-
-    const { data: organisations, error: orgError } = await orgQuery;
-
-    if (orgError) throw orgError;
-
-    // 2. Fetch Stations
-    let stationsQuery = supabase
-      .from('stations')
-      .select('id, entreprise_id, stock_essence, stock_gasoil, statut');
-
-    // Auth Filtering for Stations
-    if (profile?.entreprise_id) {
       stationsQuery = stationsQuery.eq('entreprise_id', profile.entreprise_id);
     }
 
-    const { data: stations, error: stationsError } = await stationsQuery;
+    const [orgRes, stationsRes] = await Promise.all([
+      orgQuery,
+      stationsQuery
+    ]);
 
-    if (stationsError) throw stationsError;
+    if (orgRes.error) throw orgRes.error;
+    if (stationsRes.error) throw stationsRes.error;
+
+    const organisations = orgRes.data;
+    const stations = stationsRes.data;
 
     // 3. Process Data
     const entreprisesData = organisations.map(org => {
@@ -214,12 +209,12 @@ export default function RapportsPage() {
         await generateNationalStockPDF({ ...data, isPrinting });
       } else if (type === 'alertes') {
         const data = await fetchAlertsData();
-        generateCustomReportPDF({ type, title, data });
+        await generateCustomReportPDF({ type, title, data, isPrinting });
       } else if (type === 'importations') {
         const data = await fetchImportData();
-        generateCustomReportPDF({ type, title, data });
+        await generateCustomReportPDF({ type, title, data, isPrinting });
       } else {
-        generateCustomReportPDF({ type, title, data: { message: "Données non disponibles" } });
+        await generateCustomReportPDF({ type, title, data: { message: "Données non disponibles" }, isPrinting });
       }
 
       // Save to history only if downloading
@@ -295,8 +290,11 @@ export default function RapportsPage() {
                   disabled={generating === report.id}
                   onClick={async () => {
                     setGenerating(report.id);
-                    await handleGenerate(report.id, report.title);
-                    setGenerating(null);
+                    try {
+                      await handleGenerate(report.id, report.title);
+                    } finally {
+                      setGenerating(null);
+                    }
                   }}
                 >
                   {generating === report.id ? (
@@ -376,9 +374,11 @@ export default function RapportsPage() {
                   }
 
                   setGeneratingCustom(true);
-                  // Use same handler roughly
-                  await handleGenerate(selectedType, `Rapport Personnalisé ${selectedType}`);
-                  setGeneratingCustom(false);
+                  try {
+                    await handleGenerate(selectedType, `Rapport Personnalisé ${selectedType}`);
+                  } finally {
+                    setGeneratingCustom(false);
+                  }
                 }}
               >
                 <Download className="h-4 w-4" />

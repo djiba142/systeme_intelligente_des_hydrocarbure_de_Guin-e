@@ -1,23 +1,25 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const { role, loading, getDashboardRoute } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading) {
-      navigate(getDashboardRoute(), { replace: true });
+    if (!loading && role) {
+      const route = getDashboardRoute();
+      navigate(route, { replace: true });
     }
-  }, [loading, navigate, getDashboardRoute]);
+  }, [role, loading, navigate, getDashboardRoute]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
-      <RefreshCw className="h-12 w-12 animate-spin text-primary mb-4 opacity-50" />
-      <h2 className="text-xl font-semibold mb-2 text-foreground">Préparation de votre espace de travail</h2>
-      <p className="text-muted-foreground">Chargement de votre tableau de bord personnalisé...</p>
+    <div className="flex items-center justify-center h-screen bg-background">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Redirection vers votre espace...</p>
+      </div>
     </div>
   );
 };

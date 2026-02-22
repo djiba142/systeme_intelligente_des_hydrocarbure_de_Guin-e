@@ -39,9 +39,15 @@ interface UserWithDetails {
   station_nom?: string;
 }
 
-const roleColors: Record<AppRole, string> = {
+const roleColors: Partial<Record<AppRole, string>> = {
   super_admin: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  admin_etat: 'bg-blue-100 text-blue-700 border-blue-200',
+  inspecteur: 'bg-teal-100 text-teal-700 border-teal-200',
+  analyste: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  personnel_admin: 'bg-gray-100 text-gray-700 border-gray-200',
+  service_it: 'bg-slate-100 text-slate-700 border-slate-200',
   responsable_entreprise: 'bg-amber-100 text-amber-700 border-amber-200',
+  gestionnaire_station: 'bg-orange-100 text-orange-700 border-orange-200',
 };
 
 export default function UtilisateursPage() {
@@ -61,7 +67,7 @@ export default function UtilisateursPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      let profileQuery = supabase
         .from('profiles')
         .select(`
           id,
@@ -76,49 +82,42 @@ export default function UtilisateursPage() {
 
       // Filter by company if the user is a Responsable Entreprise
       if (currentUserRole === 'responsable_entreprise' && currentUserProfile?.entreprise_id) {
-        query = query.eq('entreprise_id', currentUserProfile.entreprise_id);
+        profileQuery = profileQuery.eq('entreprise_id', currentUserProfile.entreprise_id);
       }
 
-      const { data: profiles, error: profilesError } = await query.order('created_at', { ascending: false });
+      // Run all queries in parallel for faster loading
+      const [profilesRes, rolesRes, entreprisesRes, stationsRes] = await Promise.all([
+        profileQuery.order('created_at', { ascending: false }),
+        supabase.from('user_roles').select('user_id, role'),
+        supabase.from('entreprises').select('id, nom'),
+        supabase.from('stations').select('id, nom'),
+      ]);
 
-      if (profilesError) throw profilesError;
+      if (profilesRes.error) throw profilesRes.error;
 
-      // Fetch all user roles
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
+      const profiles = profilesRes.data || [];
+      const roles = rolesRes.data || [];
+      const entreprises = entreprisesRes.data || [];
+      const stations = stationsRes.data || [];
 
-      if (rolesError) throw rolesError;
-
-      // Fetch entreprises for names
-      const { data: entreprises } = await supabase
-        .from('entreprises')
-        .select('id, nom');
-
-      // Fetch stations for names
-      const { data: stations } = await supabase
-        .from('stations')
-        .select('id, nom');
+      // Build lookup maps for O(1) access instead of O(n) find()
+      const roleMap = new Map(roles.map(r => [r.user_id, r.role]));
+      const entrepriseMap = new Map(entreprises.map(e => [e.id, e.nom]));
+      const stationMap = new Map(stations.map(s => [s.id, s.nom]));
 
       // Map profiles with roles and names
-      const usersWithDetails: UserWithDetails[] = (profiles || []).map(profile => {
-        const userRole = roles?.find(r => r.user_id === profile.user_id);
-        const entreprise = entreprises?.find(e => e.id === profile.entreprise_id);
-        const station = stations?.find(s => s.id === profile.station_id);
-
-        return {
-          id: profile.id,
-          user_id: profile.user_id,
-          full_name: profile.full_name,
-          email: profile.email,
-          phone: profile.phone || undefined,
-          created_at: profile.created_at,
-          role: (userRole?.role as AppRole) || 'responsable_entreprise',
-          entreprise_id: profile.entreprise_id || undefined,
-          entreprise_nom: entreprise?.nom,
-          station_nom: station?.nom,
-        };
-      });
+      const usersWithDetails: UserWithDetails[] = profiles.map(profile => ({
+        id: profile.id,
+        user_id: profile.user_id,
+        full_name: profile.full_name,
+        email: profile.email,
+        phone: profile.phone || undefined,
+        created_at: profile.created_at,
+        role: (roleMap.get(profile.user_id) as AppRole) || 'responsable_entreprise',
+        entreprise_id: profile.entreprise_id || undefined,
+        entreprise_nom: profile.entreprise_id ? entrepriseMap.get(profile.entreprise_id) : undefined,
+        station_nom: profile.station_id ? stationMap.get(profile.station_id) : undefined,
+      }));
 
       setUsers(usersWithDetails);
     } catch (error) {
@@ -136,12 +135,12 @@ export default function UtilisateursPage() {
     return matchesSearch && matchesRole;
   });
 
-  const usersByRole = {
-    super_admin: users.filter(u => u.role === 'super_admin').length,
-    responsable_entreprise: users.filter(u => u.role === 'responsable_entreprise').length,
-  };
+  const usersByRole: Record<string, number> = {};
+  (Object.keys(ROLE_LABELS) as AppRole[]).forEach(r => {
+    usersByRole[r] = users.filter(u => u.role === r).length;
+  });
 
-  const canCreateUser = currentUserRole === 'super_admin' || currentUserRole === 'responsable_entreprise';
+  const canCreateUser = currentUserRole === 'super_admin' || currentUserRole === 'service_it';
 
   const handleEdit = (user: UserWithDetails) => {
     setUserToEdit(user);
@@ -190,7 +189,10 @@ export default function UtilisateursPage() {
             <CardContent className="p-4 text-center">
               <Shield className={cn(
                 "h-5 w-5",
-                role === 'super_admin' ? 'text-purple-600' : 'text-amber-600'
+                role === 'super_admin' ? 'text-purple-600' :
+                  role === 'inspecteur' ? 'text-teal-600' :
+                    role === 'service_it' ? 'text-slate-600' :
+                      'text-amber-600'
               )} />
               <p className="text-2xl font-bold">{usersByRole[role]}</p>
               <p className="text-xs text-muted-foreground truncate">{ROLE_LABELS[role]}</p>
@@ -350,11 +352,16 @@ export default function UtilisateursPage() {
                 <div className="flex flex-col items-center">
                   <div className={cn(
                     "h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold text-white",
-                    role === 'super_admin' ? 'bg-purple-500' : 'bg-amber-500'
+                    role === 'super_admin' ? 'bg-purple-500' :
+                      role === 'admin_etat' ? 'bg-blue-500' :
+                        role === 'inspecteur' ? 'bg-teal-500' :
+                          role === 'analyste' ? 'bg-cyan-500' :
+                            role === 'service_it' ? 'bg-slate-500' :
+                              'bg-amber-500'
                   )}>
                     {index + 1}
                   </div>
-                  {index < 1 && <div className="w-0.5 h-8 bg-border" />}
+                  {index < Object.keys(ROLE_LABELS).length - 1 && <div className="w-0.5 h-8 bg-border" />}
                 </div>
                 <div className="flex-1 pt-1">
                   <h4 className="font-medium">{ROLE_LABELS[role]}</h4>

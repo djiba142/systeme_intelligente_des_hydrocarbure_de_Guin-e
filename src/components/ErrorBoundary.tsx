@@ -18,6 +18,10 @@ class ErrorBoundary extends Component<Props, State> {
     };
 
     public static getDerivedStateFromError(error: Error): State {
+        // Ignorer l'erreur non critique removeChild (souvent causée par des extensions de navigateur)
+        if (error.message.includes('removeChild') || error.message.includes('Node.removeChild')) {
+            return { hasError: false, error: null };
+        }
         return { hasError: true, error };
     }
 

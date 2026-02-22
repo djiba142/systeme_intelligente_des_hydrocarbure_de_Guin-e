@@ -163,43 +163,47 @@ export default function DashboardEntreprise() {
 
   const fetchData = useCallback(async () => {
     try {
-      // Fetch entreprise
-      const { data: entrepriseData, error: entrepriseError } = await supabase
-        .from('entreprises')
-        .select('*')
-        .eq('id', profile?.entreprise_id || '')
-        .maybeSingle();
+      const entrepriseId = profile?.entreprise_id || '';
+      if (!entrepriseId) {
+        setLoading(false);
+        return;
+      }
 
-      if (entrepriseError) throw entrepriseError;
-      setEntreprise(entrepriseData);
+      // Fetch ALL data in parallel in ONE round
+      const [entrepriseRes, stationsRes, ordersRes, alertsRes] = await Promise.all([
+        supabase
+          .from('entreprises')
+          .select('*')
+          .eq('id', entrepriseId)
+          .maybeSingle(),
+        supabase
+          .from('stations')
+          .select('*')
+          .eq('entreprise_id', entrepriseId)
+          .order('nom'),
+        supabase
+          .from('ordres_livraison')
+          .select('*, station:stations(nom)')
+          .eq('entreprise_id', entrepriseId)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('alertes')
+          .select('*, station:stations(nom)')
+          .eq('entreprise_id', entrepriseId)
+          .eq('resolu', false)
+          .limit(20),
+      ]);
 
-      // Fetch stations
-      const { data: stationsData, error: stationsError } = await supabase
-        .from('stations')
-        .select('*')
-        .eq('entreprise_id', profile?.entreprise_id || '')
-        .order('nom');
+      if (entrepriseRes.error) throw entrepriseRes.error;
+      setEntreprise(entrepriseRes.data);
 
-      if (stationsError) throw stationsError;
-      setStations((stationsData as any[]) || []);
+      if (stationsRes.error) throw stationsRes.error;
+      const stationsList = (stationsRes.data as any[]) || [];
+      setStations(stationsList);
 
-      // Fetch User's Orders
-      const { data: ordersData } = (await supabase
-        .from('ordres_livraison')
-        .select('*, station:stations(nom)')
-        .eq('entreprise_id', profile?.entreprise_id)
-        .order('created_at', { ascending: false });
-
-      setOrders(ordersData || []);
-
-      // Fetch alerts
-      const { data: alertData } = await supabase
-        .from('alertes')
-        .select('*, station:stations(nom)')
-        .eq('entreprise_id', profile?.entreprise_id)
-        .eq('resolu', false);
-
-      setAlerts((alertData || []).map(a => ({
+      setOrders(ordersRes.data || []);
+      setAlerts((alertsRes.data || []).map(a => ({
         id: a.id,
         station_nom: (a as { station?: { nom: string } }).station?.nom || 'Station',
         message: a.message,
@@ -343,18 +347,28 @@ export default function DashboardEntreprise() {
 
     setSubmitting(true);
     try {
-      // Logic: if station_id is 'enterprise_stock', we send null for station_id
-      // and rely on entreprise_id being set.
-      const targetStationId = orderForm.station_id === 'enterprise_stock' ? null : orderForm.station_id;
+      // station_id is required by the schema. If 'enterprise_stock', use first station.
+      let targetStationId = orderForm.station_id;
+      if (targetStationId === 'enterprise_stock') {
+        if (stations.length === 0) {
+          toast({
+            title: "Erreur",
+            description: "Vous devez d'abord créer une station pour passer une commande.",
+            variant: "destructive",
+          });
+          setSubmitting(false);
+          return;
+        }
+        targetStationId = stations[0].id;
+      }
 
       const { error } = await supabase.from('ordres_livraison').insert({
-        entreprise_id: profile?.entreprise_id || '',
         station_id: targetStationId,
         carburant: orderForm.carburant,
         quantite_demandee: parseInt(orderForm.quantite),
         priorite: orderForm.priorite,
         notes: orderForm.notes || null,
-        created_by: user?.id,
+        created_by: user?.id || '',
         statut: 'en_attente'
       });
 
@@ -372,6 +386,7 @@ export default function DashboardEntreprise() {
         priorite: 'normale',
         notes: '',
       });
+      fetchData(); // Refresh orders list
     } catch (error: unknown) {
       const err = error as Error;
       toast({

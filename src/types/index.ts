@@ -2,15 +2,46 @@
 
 export type StockLevel = 'critical' | 'warning' | 'healthy' | 'full';
 
-export type UserRole = 'super_admin' | 'admin_etat' | 'inspecteur' | 'responsable_entreprise' | 'gestionnaire_station';
+export type UserRole =
+  | 'super_admin'
+  | 'admin_etat'
+  | 'inspecteur'
+  | 'analyste'
+  | 'personnel_admin'
+  | 'service_it'
+  | 'responsable_entreprise'
+  | 'gestionnaire_station';
 
 export type EntrepriseType = 'compagnie' | 'distributeur';
 
-export type StationType = 'urbaine' | 'routiere' | 'depot' | string;  // ← élargi pour Supabase
+export type StationType = 'urbaine' | 'routiere' | 'depot' | string;
 
 export type AlertType = 'stock_critical' | 'stock_warning' | 'price_anomaly' | 'station_closed';
 
-export type StationStatus = 'ouverte' | 'fermee' | 'en_travaux' | 'attente_validation' | string;  // ← élargi
+export type StationStatus = 'ouverte' | 'fermee' | 'en_travaux' | 'attente_validation' | string;
+
+// Types d'observation pour inspecteurs
+export type ObservationType =
+  | 'pompe_en_panne'
+  | 'prix_anormal'
+  | 'station_fermee'
+  | 'suspicion_anomalie'
+  | 'autre';
+
+export type ObservationStatus = 'ouverte' | 'traitee';
+
+export interface Observation {
+  id: string;
+  station_id: string;
+  station_nom?: string;
+  inspecteur_id: string;
+  inspecteur_nom?: string;
+  type: ObservationType;
+  description: string;
+  date: string;
+  statut: ObservationStatus;
+  region?: string;
+}
 
 export interface Entreprise {
   id: string;
@@ -37,7 +68,7 @@ export interface Station {
   ville: string;
   region: string;
   coordonnees?: { lat: number; lng: number };
-  type: StationType;          // ← maintenant compatible avec n'importe quelle string
+  type: StationType;
   entrepriseId: string;
   entrepriseNom: string;
   entrepriseSigle?: string;
@@ -60,12 +91,14 @@ export interface Station {
     telephone: string;
     email: string;
   };
-  statut: StationStatus;      // ← maintenant compatible avec n'importe quelle string
+  statut: StationStatus;
   derniereLivraison?: {
     date: string;
     quantite: number;
     carburant: string;
   };
+  // Score de risque pour inspecteurs
+  scoreRisque?: number;
 }
 
 export interface Alert {
@@ -88,4 +121,14 @@ export interface DashboardStats {
   alertesWarning: number;
   stockNationalEssence: number;
   stockNationalGasoil: number;
+}
+
+// Stats pour dashboard inspecteur
+export interface InspecteurStats {
+  totalStationsRegion: number;
+  stationsEnAlerte: number;
+  stocksCritiques: number;
+  prixAnormaux: number;
+  rupturesStock: number;
+  observationsOuvertes: number;
 }

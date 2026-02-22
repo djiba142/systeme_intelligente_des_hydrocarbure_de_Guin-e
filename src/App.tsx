@@ -1,4 +1,5 @@
-// SIHG v1.0.0 - Système Intégré des Hydrocarbures de Guinée
+// SIHG v2.0.0 - Système Intégré des Hydrocarbures de Guinée
+// Multi-Rôle: Super Admin, Admin État, Inspecteur, Analyste, Personnel Admin, Service IT, Resp. Entreprise
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RequireRole } from "@/components/RequireRole";
 import { Loader2 } from "lucide-react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Eager load critical pages (public pages)
 import LandingPage from "./pages/LandingPage";
@@ -46,9 +47,13 @@ const FAQPage = lazy(() => import("./pages/resources/FAQPage"));
 const GuidePage = lazy(() => import("./pages/resources/GuidePage"));
 const SoutienPage = lazy(() => import("./pages/resources/SoutienPage"));
 
-// Lazy load dashboards
+// Lazy load dashboards - Un par rôle
 const DashboardEntreprise = lazy(() => import("./pages/dashboards/DashboardEntreprise"));
 const DashboardSuperAdmin = lazy(() => import("./pages/dashboards/DashboardSuperAdmin"));
+const DashboardInspecteur = lazy(() => import("./pages/dashboards/DashboardInspecteur"));
+const DashboardAnalyste = lazy(() => import("./pages/dashboards/DashboardAnalyste"));
+const DashboardPersonnelAdmin = lazy(() => import("./pages/dashboards/DashboardPersonnelAdmin"));
+const DashboardServiceIT = lazy(() => import("./pages/dashboards/DashboardServiceIT"));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -77,158 +82,239 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes - eager loaded */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/acces-refuse" element={<AccessDeniedPage />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes - eager loaded */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/acces-refuse" element={<AccessDeniedPage />} />
 
-            {/* DASHBOARDS STIRCTS - CHAQUE ROLE A LE SIEN */}
-            <Route path="/panel" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              {/* Redirection intelligente gérée par le composant Index ou AuthContext */}
-              <Route index element={<Suspense fallback={<PageLoader />}><Index /></Suspense>} />
-            </Route>
+              {/* ═══════════════════════════════════════════════ */}
+              {/* DASHBOARDS - CHAQUE RÔLE A LE SIEN             */}
+              {/* ═══════════════════════════════════════════════ */}
 
-            <Route path="/dashboard/admin" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><DashboardSuperAdmin /></Suspense>} />
-            </Route>
+              {/* Panel: Redirection intelligente vers le bon dashboard */}
+              <Route path="/panel" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'personnel_admin', 'service_it', 'responsable_entreprise', 'gestionnaire_station']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><Index /></Suspense>} />
+              </Route>
 
-            <Route path="/dashboard/entreprise" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><DashboardEntreprise /></Suspense>} />
-            </Route>
+              {/* Dashboard Super Admin */}
+              <Route path="/dashboard/admin" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><DashboardSuperAdmin /></Suspense>} />
+              </Route>
 
+              {/* Dashboard Inspecteur / Superviseur État */}
+              <Route path="/dashboard/inspecteur" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['inspecteur', 'admin_etat', 'super_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><DashboardInspecteur /></Suspense>} />
+              </Route>
 
-            {/* FONCTIONNALITÉS PARTAGÉES MAIS RESTREINTES */}
+              {/* Dashboard Analyste */}
+              <Route path="/dashboard/analyste" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['analyste', 'super_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><DashboardAnalyste /></Suspense>} />
+              </Route>
 
-            {/* Carte : Tout le monde */}
-            <Route path="/carte" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><CartePage /></Suspense>} />
-            </Route>
+              {/* Dashboard Personnel Admin SONAP */}
+              <Route path="/dashboard/personnel-admin" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['personnel_admin', 'super_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><DashboardPersonnelAdmin /></Suspense>} />
+              </Route>
 
-            {/* Entreprises : Admin seulemnent */}
-            <Route path="/entreprises" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><EntreprisesPage /></Suspense>} />
-            </Route>
+              {/* Dashboard Service IT */}
+              <Route path="/dashboard/service-it" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['service_it', 'super_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><DashboardServiceIT /></Suspense>} />
+              </Route>
 
-            <Route path="/entreprises/:id" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><EntrepriseDetailPage /></Suspense>} />
-            </Route>
+              {/* Dashboard Entreprise */}
+              <Route path="/dashboard/entreprise" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['responsable_entreprise', 'gestionnaire_station']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><DashboardEntreprise /></Suspense>} />
+              </Route>
 
-            {/* Stations : Tout le monde a un accès, mais la vue changera selon le rôle */}
-            <Route path="/stations" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><StationsPage /></Suspense>} />
-            </Route>
+              {/* ═══════════════════════════════════════════════ */}
+              {/* FONCTIONNALITÉS PARTAGÉES MAIS RESTREINTES      */}
+              {/* ═══════════════════════════════════════════════ */}
 
-            <Route path="/stations/:id" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><StationDetailPage /></Suspense>} />
-            </Route>
+              {/* Carte : Tous les rôles sauf service_it et personnel_admin */}
+              <Route path="/carte" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><CartePage /></Suspense>} />
+              </Route>
 
-            {/* Alertes : Tout le monde */}
-            <Route path="/alertes" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><AlertesPage /></Suspense>} />
-            </Route>
+              {/* Entreprises : Admin + Inspecteur (lecture) + Analyste (lecture) + Personnel Admin */}
+              <Route path="/entreprises" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'personnel_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><EntreprisesPage /></Suspense>} />
+              </Route>
 
-            {/* Rapports : Admin, Entreprise */}
-            <Route path="/rapports" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><RapportsPage /></Suspense>} />
-            </Route>
+              <Route path="/entreprises/:id" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise', 'personnel_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><EntrepriseDetailPage /></Suspense>} />
+              </Route>
 
-            {/* ADMINISTRATION SYSTEME - STRICTEMENT SUPER ADMIN */}
-            <Route path="/utilisateurs" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin', 'responsable_entreprise']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><UtilisateursPage /></Suspense>} />
-            </Route>
+              {/* Stations : Tous sauf Service IT et Personnel Admin */}
+              <Route path="/stations" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise', 'gestionnaire_station']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><StationsPage /></Suspense>} />
+              </Route>
 
-            <Route path="/admin/commandes" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<OrdersPage />} />
-            </Route>
+              <Route path="/stations/:id" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise', 'gestionnaire_station']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><StationDetailPage /></Suspense>} />
+              </Route>
 
-            <Route path="/parametres" element={
-              <ProtectedRoute>
-                <RequireRole allowedRoles={['super_admin']} />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Suspense fallback={<PageLoader />}><ParametresPage /></Suspense>} />
-            </Route>
+              {/* Alertes : Admin + Inspecteur + Analyste + Entreprise */}
+              <Route path="/alertes" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><AlertesPage /></Suspense>} />
+              </Route>
 
-            {/* PAGES COMMUNES */}
-            <Route path="/profil" element={
-              <ProtectedRoute>
-                <Suspense fallback={<PageLoader />}>
-                  <ProfilPage />
-                </Suspense>
-              </ProtectedRoute>
-            } />
+              {/* Rapports : Admin + Inspecteur + Analyste + Entreprise */}
+              <Route path="/rapports" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'admin_etat', 'inspecteur', 'analyste', 'responsable_entreprise']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><RapportsPage /></Suspense>} />
+              </Route>
 
-            <Route path="/a-propos" element={
-              <ProtectedRoute>
-                <Suspense fallback={<PageLoader />}>
-                  <AProposPage />
-                </Suspense>
-              </ProtectedRoute>
-            } />
+              {/* ═══════════════════════════════════════════════ */}
+              {/* ADMINISTRATION SYSTÈME                          */}
+              {/* ═══════════════════════════════════════════════ */}
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-  </ErrorBoundary >
+              {/* Utilisateurs : Super Admin + Service IT */}
+              <Route path="/utilisateurs" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'service_it']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><UtilisateursPage /></Suspense>} />
+              </Route>
+
+              {/* Commandes : Super Admin uniquement */}
+              <Route path="/admin/commandes" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<OrdersPage />} />
+              </Route>
+
+              {/* Paramètres : Super Admin uniquement */}
+              <Route path="/parametres" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><ParametresPage /></Suspense>} />
+              </Route>
+
+              {/* Audit : Super Admin + Service IT */}
+              <Route path="/audit" element={
+                <ProtectedRoute>
+                  <RequireRole allowedRoles={['super_admin', 'service_it']} />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Suspense fallback={<PageLoader />}><AuditPage /></Suspense>} />
+              </Route>
+
+              {/* ═══════════════════════════════════════════════ */}
+              {/* PAGES COMMUNES                                  */}
+              {/* ═══════════════════════════════════════════════ */}
+
+              <Route path="/profil" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <ProfilPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/a-propos" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <AProposPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/entreprise-info" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <EntrepriseInfoPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+
+              {/* Pages légales (publiques) */}
+              <Route path="/mentions-legales" element={<Suspense fallback={<PageLoader />}><MentionsLegalesPage /></Suspense>} />
+              <Route path="/confidentialite" element={<Suspense fallback={<PageLoader />}><ConfidentialitePage /></Suspense>} />
+              <Route path="/cgu" element={<Suspense fallback={<PageLoader />}><CGUPage /></Suspense>} />
+              <Route path="/cookies" element={<Suspense fallback={<PageLoader />}><CookiesPage /></Suspense>} />
+
+              {/* Pages ressources (publiques) */}
+              <Route path="/documentation" element={<Suspense fallback={<PageLoader />}><DocumentationPage /></Suspense>} />
+              <Route path="/faq" element={<Suspense fallback={<PageLoader />}><FAQPage /></Suspense>} />
+              <Route path="/guide" element={<Suspense fallback={<PageLoader />}><GuidePage /></Suspense>} />
+              <Route path="/soutien" element={<Suspense fallback={<PageLoader />}><SoutienPage /></Suspense>} />
+
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

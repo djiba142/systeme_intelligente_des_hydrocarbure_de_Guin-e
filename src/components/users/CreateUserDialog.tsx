@@ -25,11 +25,23 @@ import { useToast } from '@/hooks/use-toast';
 import { ROLE_LABELS, AppRole, useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+// All valid app roles for validation
+const ALL_APP_ROLES = [
+  'super_admin',
+  'admin_etat',
+  'inspecteur',
+  'analyste',
+  'personnel_admin',
+  'service_it',
+  'responsable_entreprise',
+  'gestionnaire_station',
+] as const;
+
 const userSchema = z.object({
   email: z.string().email('Email invalide'),
   password: z.string().min(8, 'Mot de passe doit contenir au moins 8 caractères').optional().or(z.literal('')),
   fullName: z.string().min(2, 'Nom complet requis'),
-  role: z.enum(['super_admin', 'responsable_entreprise']),
+  role: z.enum(ALL_APP_ROLES),
   phone: z.string().optional(),
   entrepriseId: z.string().optional(),
 });
@@ -69,16 +81,15 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
     },
   });
 
-  // Correction : Ajout de form dans les dépendances
   useEffect(() => {
     if (open && initialData) {
       form.reset({
         email: initialData.email,
         fullName: initialData.full_name,
-        role: initialData.role as 'super_admin' | 'responsable_entreprise',
+        role: initialData.role,
         phone: initialData.phone || '',
         entrepriseId: initialData.entreprise_id || '',
-        password: '', 
+        password: '',
       });
     } else if (open && !initialData) {
       form.reset({
@@ -94,7 +105,6 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
 
   const selectedRole = form.watch('role');
 
-  // Correction : Stabilisation de fetchData avec useCallback
   const fetchData = useCallback(async () => {
     try {
       const { data: entData } = await supabase.from('entreprises').select('id, nom');
@@ -110,11 +120,11 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
     }
   }, [open, fetchData]);
 
-  // Correction : Ajout de form dans les dépendances
+  // Auto-set company and role for responsable_entreprise users
   useEffect(() => {
     if (currentUserRole === 'responsable_entreprise' && currentUserProfile?.entreprise_id && open) {
       form.setValue('entrepriseId', currentUserProfile.entreprise_id);
-      form.setValue('role', 'responsable_entreprise');
+      form.setValue('role', 'gestionnaire_station');
     }
   }, [currentUserRole, currentUserProfile, open, form]);
 
@@ -136,9 +146,19 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
           description: `Le compte de ${data.fullName} a été modifié avec succès.`,
         });
       } else {
+        if (!data.password || data.password.length < 8) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Le mot de passe doit contenir au moins 8 caractères.",
+          });
+          setIsLoading(false);
+          return;
+        }
+
         const { error } = await createUser({
           email: data.email,
-          password: data.password || '',
+          password: data.password,
           fullName: data.fullName,
           role: data.role as AppRole,
           entrepriseId: data.entrepriseId || undefined,
@@ -155,7 +175,6 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
       onOpenChange(false);
       onUserCreated?.();
     } catch (error) {
-      // Correction : Gestion du type error au lieu de any
       console.error('Error saving user:', error);
       const errorMessage = error instanceof Error ? error.message : "Impossible d'enregistrer l'utilisateur";
       toast({
@@ -169,12 +188,28 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
   };
 
   const getAllowedRoles = (): AppRole[] => {
-    if (currentUserRole === 'super_admin') return ['super_admin', 'responsable_entreprise'];
-    if (currentUserRole === 'responsable_entreprise') return ['responsable_entreprise'];
+    if (currentUserRole === 'super_admin') {
+      // Super admin can assign all roles
+      return [...ALL_APP_ROLES];
+    }
+    if (currentUserRole === 'service_it') {
+      // Service IT can assign most roles except super_admin
+      return ALL_APP_ROLES.filter(r => r !== 'super_admin') as AppRole[];
+    }
+    if (currentUserRole === 'responsable_entreprise') {
+      // Company manager can only create station managers
+      return ['gestionnaire_station', 'responsable_entreprise'];
+    }
     return [];
   };
 
   const allowedRoles = getAllowedRoles();
+
+  // Roles that need an enterprise assignment
+  const rolesNeedingEntreprise: AppRole[] = [
+    'responsable_entreprise',
+    'gestionnaire_station',
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -246,7 +281,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
               <Label htmlFor="role">Rôle *</Label>
               <Select
                 value={form.watch('role')}
-                onValueChange={(value) => form.setValue('role', value as 'super_admin' | 'responsable_entreprise')}
+                onValueChange={(value) => form.setValue('role', value as AppRole)}
                 disabled={currentUserRole === 'responsable_entreprise'}
               >
                 <SelectTrigger>
@@ -262,7 +297,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
               </Select>
             </div>
 
-            {selectedRole === 'responsable_entreprise' && (
+            {rolesNeedingEntreprise.includes(selectedRole as AppRole) && (
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="entrepriseId">Entreprise</Label>
                 <Select
