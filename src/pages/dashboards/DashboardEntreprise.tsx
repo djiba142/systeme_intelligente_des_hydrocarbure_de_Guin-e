@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Fuel,
   AlertTriangle,
@@ -161,15 +161,7 @@ export default function DashboardEntreprise() {
     notes: '',
   });
 
-  useEffect(() => {
-    if (profile?.entreprise_id) {
-      fetchData();
-    } else {
-      setLoading(false);
-    }
-  }, [profile?.entreprise_id]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // Fetch entreprise
       const { data: entrepriseData, error: entrepriseError } = await supabase
@@ -192,10 +184,10 @@ export default function DashboardEntreprise() {
       setStations((stationsData as any[]) || []);
 
       // Fetch User's Orders
-      const { data: ordersData } = await supabase
+      const { data: ordersData } = (await supabase
         .from('ordres_livraison')
         .select('*, station:stations(nom)')
-        .eq('entreprise_id', profile?.entreprise_id || '')
+        .eq('entreprise_id', profile?.entreprise_id)
         .order('created_at', { ascending: false });
 
       setOrders(ordersData || []);
@@ -204,12 +196,12 @@ export default function DashboardEntreprise() {
       const { data: alertData } = await supabase
         .from('alertes')
         .select('*, station:stations(nom)')
-        .eq('entreprise_id', profile?.entreprise_id || '')
+        .eq('entreprise_id', profile?.entreprise_id)
         .eq('resolu', false);
 
       setAlerts((alertData || []).map(a => ({
         id: a.id,
-        station_nom: (a as any).station?.nom || 'Station',
+        station_nom: (a as { station?: { nom: string } }).station?.nom || 'Station',
         message: a.message,
         niveau: a.niveau as 'critique' | 'alerte',
       })));
@@ -218,7 +210,15 @@ export default function DashboardEntreprise() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.entreprise_id]);
+
+  useEffect(() => {
+    if (profile?.entreprise_id) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [profile?.entreprise_id, fetchData]);
 
   const handleSubmitLivraison = async () => {
     if (!newLivraison.station_id || !newLivraison.carburant || !newLivraison.quantite) {
@@ -248,8 +248,8 @@ export default function DashboardEntreprise() {
 
       if (livraisonError) throw livraisonError;
 
-      const stockField = `stock_${newLivraison.carburant}`;
-      const currentStock = (selectedStation as any)[stockField] || 0;
+      const stockField = `stock_${newLivraison.carburant}` as keyof typeof selectedStation;
+      const currentStock = (selectedStation[stockField] as number) || 0;
       const { error: updateError } = await supabase
         .from('stations')
         .update({ [stockField]: currentStock + parseInt(newLivraison.quantite) })
@@ -265,10 +265,11 @@ export default function DashboardEntreprise() {
       setIsLivraisonDialogOpen(false);
       setNewLivraison({ station_id: '', carburant: '', quantite: '', bon_livraison: '' });
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       toast({
         title: "Erreur",
-        description: error.message || "Impossible d'enregistrer la livraison",
+        description: err.message || "Impossible d'enregistrer la livraison",
         variant: "destructive",
       });
     } finally {
@@ -318,11 +319,12 @@ export default function DashboardEntreprise() {
         gestionnaire_nom: '', gestionnaire_telephone: '', gestionnaire_email: '',
       });
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       toast({
         variant: 'destructive',
         title: "Erreur lors de l'enregistrement",
-        description: err.message || "Impossible d'enregistrer la station.",
+        description: error.message || "Impossible d'enregistrer la station.",
       });
     } finally {
       setSavingStation(false);
@@ -370,10 +372,11 @@ export default function DashboardEntreprise() {
         priorite: 'normale',
         notes: '',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       toast({
         title: "Erreur",
-        description: error.message || "Impossible d'envoyer la commande",
+        description: err.message || "Impossible d'envoyer la commande",
         variant: "destructive",
       });
     } finally {

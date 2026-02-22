@@ -78,11 +78,51 @@ export default function StationsPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [isStationDialogOpen, setIsStationDialogOpen] = useState(false);
   const [savingStation, setSavingStation] = useState(false);
+<<<<<<< HEAD
 
   // Pagination
   const ITEMS_PER_PAGE = 12;
   const [currentPage, setCurrentPage] = useState(1);
 
+=======
+
+  const localLogoMapping: Record<string, string> = {
+    'TOTAL': logoTotal,
+    'TotalEnergies': logoTotal,
+    'TO': logoTotal,
+    'SHELL': logoShell,
+    'VIVO': logoShell,
+    'SH': logoShell,
+    'TMI': logoTMI,
+    'TM': logoTMI,
+    'KP': logoKP,
+    'Kamsar Petroleum': logoKP,
+    'kamsar petroleum': logoKP,
+  };
+
+  const getLogoForEntreprise = (sigle: string, nom: string): string | undefined => {
+    // Essayer d'abord avec le sigle
+    if (localLogoMapping[sigle]) {
+      return localLogoMapping[sigle];
+    }
+    // Essayer avec le nom
+    if (localLogoMapping[nom]) {
+      return localLogoMapping[nom];
+    }
+    // Essayer les variations du nom
+    const nomVariations = [
+      nom.split('(')[0].trim(), // "Vivo Energy Guinée"
+      nom.split('-')[0].trim(), // Pour les noms avec tiret
+    ];
+    for (const variation of nomVariations) {
+      if (localLogoMapping[variation]) {
+        return localLogoMapping[variation];
+      }
+    }
+    return undefined;
+  };
+
+>>>>>>> 58850716e13195feaccda2e687ba0dd9efa63961
   const [stationForm, setStationForm] = useState({
     nom: '',
     code: '',
