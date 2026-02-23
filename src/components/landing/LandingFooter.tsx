@@ -12,7 +12,7 @@ export const LandingFooter = () => {
                             <Link to="/">
                                 <img
                                     src={logo}
-                                    alt="NEXUS Logo"
+                                    alt="SIHG Logo"
                                     className="h-16 w-auto brightness-0 invert"
                                 />
                             </Link>

@@ -14,7 +14,7 @@ export const LandingNavbar = () => {
                         <Link to="/">
                             <img
                                 src={logo}
-                                alt="NEXUS Logo"
+                                alt="SIHG Logo"
                                 className="h-20 w-auto"
                             />
                         </Link>
