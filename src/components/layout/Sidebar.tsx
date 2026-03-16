@@ -105,9 +105,11 @@ const navCategories: NavCategory[] = [
   // CELLULE D'ANALYSE STRATÉGIQUE (CAS) & PLANIFICATION
   // ═══════════════════════════════════════════════════════════
   {
-    title: "Analyse & Planification Énergétique",
+    title: "Intelligence Énergétique",
     items: [
-      { name: 'Analyse Stratégique', href: '/dashboard/analyste', icon: BarChart3, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Dashboard Stratégique', href: '/dashboard/analyste', icon: LayoutDashboard, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Statistiques Nationales', href: '/statistiques', icon: BarChart3, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Prévisions Énergétiques', href: '/previsions', icon: Activity, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════

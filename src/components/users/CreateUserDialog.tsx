@@ -97,17 +97,19 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
     { label: 'Chef de Service Régulation Nationale', role: 'admin_etat' },
   ],
   // ─── Cellule d'Analyse Stratégique ──────────────────────────────────────
+  // ─── Cellule d'Analyse Stratégique ──────────────────────────────────────
   analyse: [
     { label: 'Analyste National (CAS)', role: 'analyste' },
     { label: 'Analyste Stratégique', role: 'analyste' },
     { label: 'Responsable Prévisions', role: 'analyste' },
-    { label: 'Expert en Sécurité Énergétique', role: 'analyste' },
+    { label: 'Expert Sécurité Énergétique', role: 'analyste' },
   ],
 
   // ─── Cellule de Planification Énergétique ────────────────────────────────
   planification_energetique: [
-    { label: 'Analyste Énergétique', role: 'analyste' },
-    { label: 'Expert Planification', role: 'analyste' },
+    { label: 'Chef de la Cellule de Planification Énergétique', role: 'analyste' },
+    { label: 'Analyste en Planification Énergétique', role: 'analyste' },
+    { label: 'Statisticien Énergétique', role: 'analyste' },
   ],
   // ─── DSI ─────────────────────────────────────────────────────────────────
   dsi: [
