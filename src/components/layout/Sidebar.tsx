@@ -201,15 +201,16 @@ const navCategories: NavCategory[] = [
     ]
   },
   // ═══════════════════════════════════════════════════════════
-  // DSI & INFRASTRUCTURE
+  // DSI — ADMINISTRATION SIHG
   // ═══════════════════════════════════════════════════════════
   {
-    title: "DSI & Infrastructure",
+    title: "Administration SIHG (DSI)",
     items: [
-      { name: 'Console IT', href: '/dashboard/service-it', icon: Terminal, roles: ['service_it', 'super_admin'] },
-      { name: 'Utilisateurs', href: '/utilisateurs', icon: Users, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'service_it', 'directeur_financier', 'directeur_juridique', 'directeur_importation', 'directeur_logistique'] },
-      { name: 'Logs & Sécurité', href: '/audit', icon: Shield, roles: ['super_admin', 'service_it', 'directeur_general', 'directeur_adjoint'] },
-      { name: 'Paramètres', href: '/parametres', icon: Settings, roles: ['super_admin'] },
+      { name: 'Console DSI', href: '/dashboard/service-it', icon: Terminal, roles: ['service_it', 'super_admin'] },
+      { name: 'Gestion Utilisateurs', href: '/utilisateurs', icon: Users, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'service_it', 'directeur_financier', 'directeur_juridique', 'directeur_importation', 'directeur_logistique'] },
+      { name: 'Journaux d\'Audit', href: '/audit', icon: Shield, roles: ['super_admin', 'service_it', 'directeur_general', 'directeur_adjoint'] },
+      { name: 'Sécurité Informatique', href: '/audit', icon: ShieldCheck, roles: ['super_admin', 'service_it'] },
+      { name: 'Paramètres Système', href: '/parametres', icon: Settings, roles: ['super_admin'] },
     ]
   }
 ];

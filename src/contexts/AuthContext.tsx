@@ -701,7 +701,7 @@ export function useAuth() {
 }
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  super_admin: 'Super Administrateur National',
+  super_admin: 'Super Administrateur National (DSI)',
   directeur_general: 'Directeur Général (Administrateur central État)',
   directeur_adjoint: 'Directeur Général Adjoint (Administrateur central État)',
   admin_etat: 'Administrateur État (Régulation)',
@@ -716,7 +716,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   inspecteur: 'Corps des Inspecteurs (Contrôle & Audit)',
   analyste: 'Cellule d’Analyse Stratégique (CAS)',
   personnel_admin: 'Personnel Administratif (Gestion & Conformité)',
-  service_it: 'Direction des Systèmes d’Information (DSI)',
+  service_it: 'Direction des Systèmes Informatiques (DSI)',
   responsable_entreprise: 'Responsable Entreprise Pétrolière',
   operateur_entreprise: 'Opérateur Entreprise (Logistique)',
   directeur_juridique: 'Directeur Juridique & Conformité (DJ/C)',
@@ -733,7 +733,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
-  super_admin: "L'autorité technique suprême et le niveau le plus élevé du système. Gestion globale, serveurs, sécurité et permissions système.",
+  super_admin: "Autorité technique la plus élevée du système SIHG. Administration de toute la plateforme nationale, gestion des comptes, rôles, paramètres système, serveurs et sécurité.",
   directeur_general: 'Directeur Général de la SONAP. Administrateur central État. Autorité ultime de régulation et pilotage stratégique.',
   directeur_adjoint: 'Directeur Général Adjoint de la SONAP. Administrateur central État. Coordination opérationnelle et supervision nationale.',
   admin_etat: 'Niveau national stratégique (Régulateur). Création d\'entreprises, validation de stations et sécurité énergétique.',
@@ -748,7 +748,7 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   inspecteur: 'Agent de contrôle du secteur pétrolier. Inspection des stations, vérification des stocks et des prix officiels.',
   analyste: 'Analyse des données nationales. Production de rapports statistiques et prévision des risques.',
   personnel_admin: 'Chargé de la gestion documentaire et du suivi administratif de la SONAP.',
-  service_it: 'Ingénieurs DSI. Maintenance technique, gestion des serveurs et support technique global.',
+  service_it: 'Ingénieurs DSI. Maintenance technique, gestion des serveurs, base de données, réseau et support technique aux utilisateurs.',
   responsable_entreprise: 'Directeur ou Responsable de compagnie pétrolière. Gestion des stations de son réseau.',
   operateur_entreprise: 'Responsable logistique de l\'entreprise. Organisation des camions et livraisons.',
   directeur_juridique: 'Responsable de la Direction Juridique. Validation finale de la conformité légale.',

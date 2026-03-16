@@ -97,7 +97,6 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
     { label: 'Chef de Service Régulation Nationale', role: 'admin_etat' },
   ],
   // ─── Cellule d'Analyse Stratégique ──────────────────────────────────────
-  // ─── Cellule d'Analyse Stratégique ──────────────────────────────────────
   analyse: [
     { label: 'Analyste National (CAS)', role: 'analyste' },
     { label: 'Analyste Stratégique', role: 'analyste' },
@@ -111,13 +110,14 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
     { label: 'Analyste en Planification Énergétique', role: 'analyste' },
     { label: 'Statisticien Énergétique', role: 'analyste' },
   ],
-  // ─── DSI ─────────────────────────────────────────────────────────────────
+  // ─── DSI — Direction des Systèmes Informatiques ─────────────────────────────
   dsi: [
     { label: 'Super Administrateur National', role: 'super_admin' },
     { label: 'Directeur DSI', role: 'service_it' },
     { label: 'Administrateur Système', role: 'service_it' },
-    { label: 'Ingénieur Réseau / Infrastructure', role: 'service_it' },
+    { label: 'Ingénieur Réseau Informatique', role: 'service_it' },
     { label: 'Support Technique IT', role: 'service_it' },
+    { label: 'Administrateur Sécurité Informatique', role: 'service_it' },
   ],
   // ─── DSA — Direction des Services Aval ─────────────────────────────────────
   dsa: [
