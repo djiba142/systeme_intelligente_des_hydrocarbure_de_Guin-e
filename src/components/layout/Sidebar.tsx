@@ -107,9 +107,13 @@ const navCategories: NavCategory[] = [
   {
     title: "Intelligence Énergétique",
     items: [
-      { name: 'Dashboard Stratégique', href: '/dashboard/analyste', icon: LayoutDashboard, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Dashboard Analytique', href: '/dashboard/analyste', icon: LayoutDashboard, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
       { name: 'Statistiques Nationales', href: '/statistiques', icon: BarChart3, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Analyse Entreprises', href: '/entreprises', icon: Building2, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Analyse Distribution', href: '/stations', icon: Fuel, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
       { name: 'Prévisions Énergétiques', href: '/previsions', icon: Activity, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Analyse Risques', href: '/alertes', icon: AlertTriangle, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
+      { name: 'Rapports Stratégiques', href: '/rapports', icon: FileText, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════
@@ -180,11 +184,11 @@ const navCategories: NavCategory[] = [
   {
     title: "Gestion des Opérations",
     items: [
-      { name: 'Entreprises', href: '/entreprises', icon: Building2, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'inspecteur', 'analyste', 'personnel_admin', 'directeur_importation', 'directeur_logistique'] },
-      { name: 'Stations-Service', href: '/stations', icon: Fuel, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_bureau_aval', 'agent_supervision_aval', 'inspecteur', 'analyste', 'responsable_entreprise', 'operateur_entreprise', 'personnel_admin', 'directeur_logistique'] },
+      { name: 'Entreprises', href: '/entreprises', icon: Building2, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'inspecteur', 'personnel_admin', 'directeur_importation', 'directeur_logistique'] },
+      { name: 'Stations-Service', href: '/stations', icon: Fuel, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_bureau_aval', 'agent_supervision_aval', 'inspecteur', 'responsable_entreprise', 'operateur_entreprise', 'personnel_admin', 'directeur_logistique'] },
       { name: 'Importations', href: '/importations', icon: Ship, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'analyste', 'directeur_importation', 'agent_importation'] },
       { name: 'Commandes Flux', href: '/admin/commandes', icon: Truck, roles: ['admin_etat', 'super_admin', 'directeur_general', 'directeur_adjoint', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'responsable_entreprise', 'operateur_entreprise', 'inspecteur', 'analyste'] },
-      { name: 'Alertes & Risques', href: '/alertes', icon: AlertTriangle, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_bureau_aval', 'agent_supervision_aval', 'inspecteur', 'analyste', 'responsable_entreprise', 'operateur_entreprise', 'personnel_admin', 'charge_conformite'] },
+      { name: 'Alertes & Risques', href: '/alertes', icon: AlertTriangle, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_bureau_aval', 'agent_supervision_aval', 'inspecteur', 'responsable_entreprise', 'operateur_entreprise', 'personnel_admin', 'charge_conformite'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════
@@ -193,7 +197,7 @@ const navCategories: NavCategory[] = [
   {
     title: "Pilotage & Données",
     items: [
-      { name: 'Rapports & Stats', href: '/rapports', icon: FileText, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'operateur_entreprise', 'inspecteur', 'analyste', 'responsable_entreprise', 'personnel_admin', 'service_it', 'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique', 'directeur_financier', 'controleur_financier', 'comptable', 'directeur_importation', 'agent_importation', 'directeur_logistique', 'agent_logistique'] },
+      { name: 'Rapports & Stats', href: '/rapports', icon: FileText, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'operateur_entreprise', 'inspecteur', 'responsable_entreprise', 'personnel_admin', 'service_it', 'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique', 'directeur_financier', 'controleur_financier', 'comptable', 'directeur_importation', 'agent_importation', 'directeur_logistique', 'agent_logistique'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════
