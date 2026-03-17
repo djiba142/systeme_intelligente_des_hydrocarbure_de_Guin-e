@@ -53,8 +53,9 @@ export type StationType = 'urbaine' | 'routiere' | 'depot' | string;
 export type AlertType = 'stock_critical' | 'stock_warning' | 'price_anomaly' | 'station_closed';
 
 export type DossierStatus = 
-  | 'nouveau'
-  | 'en_cours_verification'
+  | 'recu'
+  | 'incomplet'
+  | 'numerise'
   | 'analyse_technique'
   | 'analyse_administrative'
   | 'analyse_juridique'

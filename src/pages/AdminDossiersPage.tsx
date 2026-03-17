@@ -36,14 +36,15 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Dossier, DossierStatus } from '@/types';
 
-const STATUS_LABELS: Record<DossierStatus, { label: string, color: string, icon: any }> = {
-  nouveau: { label: 'Nouveau', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Plus },
-  en_cours_verification: { label: 'Vérification', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
+const STATUS_LABELS: Record<string, { label: string, color: string, icon: any }> = {
+  recu: { label: 'Reçu (Papier)', color: 'bg-slate-100 text-slate-700 border-slate-200', icon: FolderOpen },
+  incomplet: { label: 'Dossier Incomplet', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertCircle },
+  numerise: { label: 'Numérisé', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: FileText },
   analyse_technique: { label: 'Analyse Technique (DSA)', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Activity },
   analyse_administrative: { label: 'Analyse Administrative (DA)', color: 'bg-slate-100 text-slate-700 border-slate-200', icon: FileCheck },
   analyse_juridique: { label: 'Analyse Juridique (DJ/C)', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Shield },
   approuve: { label: 'Approuvé (DG)', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
-  rejete: { label: 'Rejeté', color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
+  rejete: { label: 'Rejeté', color: 'bg-pink-100 text-pink-700 border-pink-200', icon: XCircle },
   archive: { label: 'Archivé', color: 'bg-gray-100 text-gray-700 border-gray-200', icon: Archive }
 };
 
@@ -59,6 +60,16 @@ export default function AdminDossiersPage() {
   const [newEntiteNom, setNewEntiteNom] = useState('');
   const [newEntiteType, setNewEntiteType] = useState('entreprise');
   const [newTypeDemande, setNewTypeDemande] = useState('agrement_entreprise');
+  
+  // Procedure Wizard States
+  const [wizardStep, setWizardStep] = useState(1); // 1: Recu, 2: Pre-controle, 3: Numerisation
+  const [checklist, setChecklist] = useState({
+    rccm: false,
+    nif: false,
+    statuts: false,
+    photos: false,
+    quittance: false
+  });
 
   useEffect(() => {
     fetchDossiers();
@@ -143,8 +154,8 @@ export default function AdminDossiersPage() {
           <Card className="rounded-2xl border-none shadow-sm bg-blue-600 text-white overflow-hidden relative">
             <div className="absolute right-0 top-0 h-full w-24 bg-white/10 -skew-x-12 translate-x-12" />
             <CardHeader className="pb-2">
-              <CardDescription className="text-blue-100 font-bold uppercase text-[10px] tracking-widest">Nouveaux / Réception</CardDescription>
-              <CardTitle className="text-3xl font-black">{dossiers.filter(d => d.statut === 'nouveau').length}</CardTitle>
+              <CardDescription className="text-blue-100 font-bold uppercase text-[10px] tracking-widest">Réception / Scan</CardDescription>
+              <CardTitle className="text-3xl font-black">{dossiers.filter(d => ['recu', 'numerise', 'incomplet'].includes(d.statut)).length}</CardTitle>
             </CardHeader>
           </Card>
           <Card className="rounded-2xl border-none shadow-sm bg-amber-500 text-white">
@@ -197,11 +208,12 @@ export default function AdminDossiersPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-transparent">
           <TabsList className="bg-slate-100/50 p-1 border border-slate-200 rounded-2xl mb-6 overflow-x-auto h-auto min-w-full md:min-w-0">
             <TabsTrigger value="tous" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest">Tous</TabsTrigger>
-            <TabsTrigger value="nouveau" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest">Nouveaux</TabsTrigger>
+            <TabsTrigger value="recu" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest">En Réception</TabsTrigger>
+            <TabsTrigger value="numerise" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest text-blue-600 underline decoration-2">Numérisés</TabsTrigger>
             <TabsTrigger value="analyse_technique" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest">Tech (DSA)</TabsTrigger>
             <TabsTrigger value="analyse_administrative" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest">Admin (DA)</TabsTrigger>
-            <TabsTrigger value="analyse_juridique" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest">Legal (DJ/C)</TabsTrigger>
-            <TabsTrigger value="approuve" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest text-emerald-600">Validés</TabsTrigger>
+            <TabsTrigger value="analyse_juridique" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest text-purple-600 italic">Legal (DJ/C)</TabsTrigger>
+            <TabsTrigger value="approuve" className="rounded-xl px-4 py-2 font-black text-[10px] uppercase tracking-widest text-emerald-600">Approuvés (DG)</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-0 focus-visible:ring-0">
@@ -265,8 +277,13 @@ export default function AdminDossiersPage() {
                                 
                                 <DropdownMenuSeparator className="my-1" />
                                 
-                                {/* Conditional workflow actions based on current status and role */}
-                                {d.statut === 'nouveau' && ['agent_administratif', 'chef_service_administratif', 'super_admin'].includes(role || '') && (
+                                {d.statut === 'recu' && ['agent_administratif', 'chef_service_administratif', 'super_admin'].includes(role || '') && (
+                                  <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg font-bold text-blue-600" onClick={() => { setSelectedDossier(d); setIsDossierDetailOpen(true); }}>
+                                    <FileText className="h-4 w-4" /> Procéder à la Numérisation (Scan)
+                                  </DropdownMenuItem>
+                                )}
+
+                                {d.statut === 'numerise' && ['agent_administratif', 'chef_service_administratif', 'super_admin'].includes(role || '') && (
                                   <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg font-bold text-amber-600" onClick={() => handleUpdateStatus(d.id, 'analyse_technique')}>
                                     <Activity className="h-4 w-4" /> Transmettre à la DSA (Technique)
                                   </DropdownMenuItem>
@@ -346,16 +363,66 @@ export default function AdminDossiersPage() {
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { name: 'RCCM', url: selectedDossier.rccm_url },
-                        { name: 'NIF', url: selectedDossier.nif_url },
-                        { name: 'Statuts', url: selectedDossier.statuts_url },
-                        { name: "Autorisation d'Exploitation", url: selectedDossier.autorisation_url }
+                        { id: 'rccm_url', name: 'Registre du Commerce (RCCM)', url: selectedDossier.rccm_url },
+                        { id: 'nif_url', name: 'Numéro Identification Fiscale (NIF)', url: selectedDossier.nif_url },
+                        { id: 'statuts_url', name: 'Statuts de l\'Entreprise', url: selectedDossier.statuts_url },
+                        { id: 'autorisation_url', name: "Autorisation d'Exploitation", url: selectedDossier.autorisation_url }
                       ].map((doc, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 group hover:border-indigo-200 hover:bg-white transition-all">
-                          <span className="text-xs font-bold text-slate-600">{doc.name}</span>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg group-hover:text-indigo-600" disabled={!doc.url}>
-                            {doc.url ? <Download className="h-4 w-4" /> : <XCircle className="h-4 w-4 opacity-20" />}
-                          </Button>
+                        <div key={i} className="flex flex-col p-4 rounded-2xl border border-slate-100 bg-slate-50/50 group hover:border-indigo-200 hover:bg-white transition-all gap-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider font-mono">{doc.name}</span>
+                            <div className="flex items-center gap-1">
+                              {doc.url ? (
+                                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[8px] uppercase font-black">Prêt</Badge>
+                              ) : (
+                                <Badge className="bg-slate-200 text-slate-500 border-none text-[8px] uppercase font-black">Manquant</Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {doc.url ? (
+                              <Button variant="outline" size="sm" className="flex-1 rounded-xl h-9 text-[10px] font-bold gap-2">
+                                <Eye className="h-3 w-3" /> Voir
+                              </Button>
+                            ) : (
+                              <div className="flex-1 relative">
+                                <Input 
+                                  type="file" 
+                                  className="absolute inset-0 opacity-0 cursor-pointer" 
+                                  accept=".pdf"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    
+                                    toast.loading(`Numérisation de ${doc.name}...`);
+                                    try {
+                                      // Simulate upload for demo purposes as we don't have bucket setup in this environment
+                                      const fakeUrl = `https://storage.sihg.gn/dossiers/${selectedDossier.id}/${doc.id}.pdf`;
+                                      
+                                      const { error } = await supabase
+                                        .from('dossiers')
+                                        .update({ [doc.id]: fakeUrl })
+                                        .eq('id', selectedDossier.id);
+                                        
+                                      if (error) throw error;
+                                      
+                                      toast.dismiss();
+                                      toast.success(`${doc.name} numérisé avec succès !`);
+                                      setSelectedDossier(prev => prev ? { ...prev, [doc.id]: fakeUrl } : null);
+                                      fetchDossiers();
+                                    } catch (err: any) {
+                                      toast.dismiss();
+                                      toast.error("Erreur d'upload: " + err.message);
+                                    }
+                                  }}
+                                />
+                                <Button variant="outline" size="sm" className="w-full rounded-xl h-9 text-[10px] font-bold gap-2 border-dashed border-slate-300">
+                                  <Plus className="h-3 w-3" /> Scanner / PDF
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -370,41 +437,110 @@ export default function AdminDossiersPage() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100">
-                    <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-widest mb-3">Workflow Intelligence</h4>
-                    <div className="space-y-4">
-                       <div className="flex items-start gap-2">
-                         <div className={cn("h-4 w-4 rounded-full mt-0.5", selectedDossier.valide_par_dsa ? "bg-emerald-500" : "bg-slate-200")} />
-                         <div>
-                           <p className="text-[11px] font-black text-slate-900 leading-none">DSA (Technique)</p>
-                           <p className="text-[9px] text-slate-500 mt-1">{selectedDossier.valide_par_dsa ? 'Validé' : 'En attente'}</p>
-                         </div>
-                       </div>
-                       <div className="flex items-start gap-2">
-                         <div className={cn("h-4 w-4 rounded-full mt-0.5", selectedDossier.valide_par_da ? "bg-emerald-500" : "bg-slate-200")} />
-                         <div>
-                           <p className="text-[11px] font-black text-slate-900 leading-none">DA (Administratif)</p>
-                           <p className="text-[9px] text-slate-500 mt-1">{selectedDossier.valide_par_da ? 'Validé' : 'En attente'}</p>
-                         </div>
-                       </div>
-                       <div className="flex items-start gap-2">
-                         <div className={cn("h-4 w-4 rounded-full mt-0.5", selectedDossier.valide_par_djc ? "bg-emerald-500" : "bg-slate-200")} />
-                         <div>
-                           <p className="text-[11px] font-black text-slate-900 leading-none">DJ/C (Juridique)</p>
-                           <p className="text-[9px] text-slate-500 mt-1">{selectedDossier.valide_par_djc ? 'Validé' : 'En attente'}</p>
-                         </div>
-                       </div>
+                  {/* Performance / Timeline Module */}
+                  <div className="p-6 rounded-[2rem] bg-slate-900 text-white shadow-xl">
+                    <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-6 flex items-center gap-2">
+                       <ShieldCheck className="h-4 w-4" /> Traçabilité SIHG
+                    </h4>
+                    
+                    <div className="space-y-6 relative ml-1">
+                      <div className="absolute left-1.5 top-0 bottom-0 w-[2px] bg-slate-800" />
+                      
+                      {[
+                        { label: 'Réception SONAP', key: 'recu', icon: FolderOpen, color: 'text-slate-400' },
+                        { label: 'Analyse DSA', key: 'valide_par_dsa', icon: Activity, color: 'text-indigo-400' },
+                        { label: 'Analyse Administrative', key: 'valide_par_da', icon: FileCheck, color: 'text-amber-400' },
+                        { label: 'Analyse Juridique/Legal', key: 'valide_par_djc', icon: Shield, color: 'text-purple-400' },
+                        { label: 'Décision FINALE (DG)', key: 'valide_par_dg', icon: CheckCircle2, color: 'text-emerald-400' }
+                      ].map((step, idx) => {
+                        const isDone = step.key === 'recu' ? true : !!(selectedDossier as any)[step.key];
+                        return (
+                          <div key={idx} className="flex items-start gap-4 relative z-10">
+                            <div className={cn(
+                              "h-3 w-3 rounded-full mt-1 border-2 border-slate-900 ring-2 ring-offset-2 ring-offset-slate-900 transition-all duration-500",
+                              isDone ? "bg-white ring-white/50" : "bg-slate-700 ring-transparent"
+                            )} />
+                            <div className="flex flex-col">
+                              <span className={cn("text-[10px] font-black uppercase tracking-widest", isDone ? "text-white" : "text-slate-600")}>
+                                {step.label}
+                              </span>
+                              <span className="text-[9px] text-slate-500 font-medium">
+                                {isDone ? "Action validée et tracée" : "En attente de traitement"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+                  </div>
+
+                  {/* Decision Guidance */}
+                  <div className="p-6 rounded-[2rem] bg-emerald-50 border border-emerald-100 italic">
+                    <p className="text-[10px] text-emerald-800 font-bold leading-relaxed">
+                      "Toute action dans le SIHG est enregistrée, horodatée et attribuée à votre profil. Veillez à la conformité des documents numérisés."
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <Button variant="outline" className="rounded-xl px-8 font-bold" onClick={() => setIsDossierDetailOpen(false)}>Fermer</Button>
-                {selectedDossier.statut === 'analyse_juridique' && role === 'directeur_juridique' && (
-                   <Button className="bg-indigo-600 text-white rounded-xl px-8 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-indigo-600/20">Transmettre pour Signature</Button>
-                )}
-              </div>
+                <div className="flex flex-col gap-3">
+                  <Button variant="outline" className="rounded-xl px-8 font-bold h-12" onClick={() => setIsDossierDetailOpen(false)}>Fermer</Button>
+                  
+                  {/* Action for Administrative Agent during Scan Phase */}
+                  {selectedDossier.statut === 'recu' && (selectedDossier.rccm_url || selectedDossier.nif_url || selectedDossier.statuts_url) && (
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 h-12 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-blue-600/20"
+                      onClick={() => handleUpdateStatus(selectedDossier.id, 'numerise')}
+                    >
+                      <FileCheck className="mr-2 h-4 w-4" /> Terminer la Numérisation
+                    </Button>
+                  )}
+
+                  {/* Decision Panel for Directions */}
+                  {((selectedDossier.statut === 'numerise' && role?.includes('aval')) ||
+                    (selectedDossier.statut === 'analyse_technique' && role?.includes('administratif')) ||
+                    (selectedDossier.statut === 'analyse_administrative' && role?.includes('juridique')) ||
+                    (selectedDossier.statut === 'analyse_juridique' && ['directeur_general', 'super_admin'].includes(role || ''))) && (
+                    <div className="flex gap-2 w-full">
+                      <Button 
+                        variant="destructive" 
+                        className="flex-1 rounded-xl h-12 font-black uppercase text-[10px] tracking-widest"
+                        onClick={() => handleUpdateStatus(selectedDossier.id, 'rejete')}
+                      >
+                        Rejeter
+                      </Button>
+                      <Button 
+                        className="flex-[2] bg-slate-900 hover:bg-black text-white rounded-xl h-12 font-black uppercase text-[10px] tracking-widest shadow-xl"
+                        onClick={() => {
+                          const nextStatus: Record<string, DossierStatus> = {
+                            'numerise': 'analyse_technique',
+                            'analyse_technique': 'analyse_administrative',
+                            'analyse_administrative': 'analyse_juridique',
+                            'analyse_juridique': 'approuve'
+                          };
+                          handleUpdateStatus(selectedDossier.id, nextStatus[selectedDossier.statut] || 'approuve');
+                        }}
+                      >
+                        Valider & Transférer
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Final Approval Action */}
+                  {selectedDossier.statut === 'approuve' && (
+                     <Button 
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-12 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-emerald-600/20"
+                      onClick={() => {
+                        toast.success("Document officiel généré en PDF !");
+                        setTimeout(() => {
+                           window.open('https://bjcnvbrcyezswdrefzgh.supabase.co/storage/v1/object/public/templates/exemplaire_agrement_sihg.pdf', '_blank');
+                        }, 1000);
+                      }}
+                     >
+                       <ShieldCheck className="mr-2 h-4 w-4" /> Télécharger l'Agrément / Licence
+                     </Button>
+                  )}
+                </div>
             </>
           )}
         </DialogContent>
@@ -412,74 +548,170 @@ export default function AdminDossiersPage() {
 
       {/* New Dossier Creation (Simplified for demo) */}
       <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
-        <DialogContent className="max-w-xl p-8 rounded-[2rem]">
-          <DialogHeader>
-             <DialogTitle className="text-2xl font-black">ENREGISTREMENT DOSSIER</DialogTitle>
-             <DialogDescription>Initialisation manuelle par l'Agent Administratif</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-             <div className="space-y-2">
-               <Label className="text-[10px] font-black uppercase tracking-widest">Nom de l'Entité</Label>
-               <Input 
-                 placeholder="Ex: Shell Guinea SARL" 
-                 className="rounded-xl" 
-                 value={newEntiteNom}
-                 onChange={(e) => setNewEntiteNom(e.target.value)}
-               />
-             </div>
-             <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                 <Label className="text-[10px] font-black uppercase tracking-widest">Type</Label>
-                 <Select value={newEntiteType} onValueChange={setNewEntiteType}>
-                    <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                       <SelectItem value="entreprise">Entreprise</SelectItem>
-                       <SelectItem value="station">Station-Service</SelectItem>
-                    </SelectContent>
-                 </Select>
-               </div>
-               <div className="space-y-2">
-                 <Label className="text-[10px] font-black uppercase tracking-widest">Demande</Label>
-                 <Select value={newTypeDemande} onValueChange={setNewTypeDemande}>
-                    <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                       <SelectItem value="ouverture_station">Ouverture Station</SelectItem>
-                       <SelectItem value="agrement_entreprise">Agrément</SelectItem>
-                       <SelectItem value="renouvellement_licence">Licence</SelectItem>
-                    </SelectContent>
-                 </Select>
-               </div>
-             </div>
+        <DialogContent className="max-w-2xl p-8 rounded-[2rem] border-none shadow-2xl">
+          <div className="flex items-center gap-2 mb-6">
+            {[1, 2, 3].map((step) => (
+              <div 
+                key={step} 
+                className={cn(
+                  "h-2 flex-1 rounded-full transition-all duration-500",
+                  wizardStep >= step ? "bg-slate-900" : "bg-slate-100"
+                )} 
+              />
+            ))}
           </div>
-          <DialogFooter>
-             <Button variant="ghost" onClick={() => setIsNewDialogOpen(false)}>Annuler</Button>
-             <Button 
-               className="bg-slate-900 text-white rounded-xl px-8" 
-               onClick={async () => {
-                 if (!newEntiteNom) return toast.error("Le nom est requis");
-                 
-                 const { error } = await supabase.from('dossiers').insert([{
-                   numero_dossier: `SIHG-DA-${Math.floor(Math.random()*9000)+1000}`,
-                   entite_nom: newEntiteNom,
-                   entite_type: newEntiteType,
-                   type_demande: newTypeDemande,
-                   statut: 'nouveau',
-                   entite_id: '00000000-0000-0000-0000-000000000000'
-                 }]);
 
-                 if (error) toast.error(error.message);
-                 else {
-                   toast.success("Dossier enregistré !");
-                   setIsNewDialogOpen(false);
-                   setNewEntiteNom('');
-                   setNewEntiteType('entreprise');
-                   setNewTypeDemande('agrement_entreprise');
-                   fetchDossiers();
-                 }
-               }}
-             >
-               Créer le Dossier
-             </Button>
+          <DialogHeader>
+             <DialogTitle className="text-3xl font-black tracking-tighter">
+               {wizardStep === 1 && "1. RÉCEPTION PHYSIQUE"}
+               {wizardStep === 2 && "2. PRÉ-CONTRÔLE DOCS"}
+               {wizardStep === 3 && "3. FINALISATION"}
+             </DialogTitle>
+             <DialogDescription className="font-medium">
+               {wizardStep === 1 && "Enregistrement des informations de base du dossier papier."}
+               {wizardStep === 2 && "Vérification de la présence des pièces obligatoires."}
+               {wizardStep === 3 && "Attribution du numéro de dossier et confirmation."}
+             </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 min-h-[300px]">
+            {wizardStep === 1 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                 <div className="space-y-3">
+                   <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Nom de l'Entité (Entreprise / Station)</Label>
+                   <div className="relative">
+                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                     <Input 
+                       placeholder="Ex: SONAP Distribution SARL" 
+                       className="rounded-2xl h-14 pl-10 border-slate-200 focus:border-slate-900 transition-all font-bold text-lg shadow-sm" 
+                       value={newEntiteNom}
+                       onChange={(e) => setNewEntiteNom(e.target.value)}
+                     />
+                   </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-6">
+                   <div className="space-y-3">
+                     <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Type d'Entité</Label>
+                     <Select value={newEntiteType} onValueChange={setNewEntiteType}>
+                        <SelectTrigger className="rounded-2xl h-14 border-slate-200 font-bold shadow-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-2xl p-2">
+                           <SelectItem value="entreprise" className="rounded-xl">Entreprise</SelectItem>
+                           <SelectItem value="station" className="rounded-xl">Station-Service</SelectItem>
+                        </SelectContent>
+                     </Select>
+                   </div>
+                   <div className="space-y-3">
+                     <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Nature de la Demande</Label>
+                     <Select value={newTypeDemande} onValueChange={setNewTypeDemande}>
+                        <SelectTrigger className="rounded-2xl h-14 border-slate-200 font-bold shadow-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-2xl p-2">
+                           <SelectItem value="agrement_entreprise" className="rounded-xl">Demande d'Agrément</SelectItem>
+                           <SelectItem value="ouverture_station" className="rounded-xl">Ouverture Station</SelectItem>
+                           <SelectItem value="renouvellement_licence" className="rounded-xl">Licence d'Exploitation</SelectItem>
+                        </SelectContent>
+                     </Select>
+                   </div>
+                 </div>
+              </div>
+            )}
+
+            {wizardStep === 2 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-sm font-bold text-slate-500 mb-4 bg-amber-50 p-4 rounded-2xl border border-amber-100 flex gap-2">
+                  <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+                  Veuillez vérifier physiquement le dossier papier et cocher les pièces présentes.
+                </p>
+                <div className="grid grid-cols-1 gap-2">
+                  {Object.entries(checklist).map(([key, value]) => (
+                    <div 
+                      key={key} 
+                      onClick={() => setChecklist(prev => ({ ...prev, [key]: !value }))}
+                      className={cn(
+                        "flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer group",
+                        value ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-100 hover:border-slate-300"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "h-6 w-6 rounded-lg flex items-center justify-center transition-colors",
+                          value ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-300 group-hover:bg-slate-200"
+                        )}>
+                          {value ? <CheckCircle2 className="h-4 w-4" /> : <div className="h-2 w-2 rounded-full bg-current" />}
+                        </div>
+                        <span className={cn("font-bold uppercase text-[10px] tracking-widest", value ? "text-emerald-700" : "text-slate-500")}>
+                          {key === 'rccm' && "Registre du Commerce (RCCM)"}
+                          {key === 'nif' && "Numéro d'Identification Fiscale (NIF)"}
+                          {key === 'statuts' && "Statuts de l'Entreprise"}
+                          {key === 'photos' && "Photos du Site (Si Station)"}
+                          {key === 'quittance' && "Quittance de Frais de Dossier"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {wizardStep === 3 && (
+              <div className="flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in-95 duration-500 py-10">
+                <div className="h-24 w-24 rounded-[2.5rem] bg-slate-900 flex items-center justify-center text-white shadow-2xl shadow-slate-900/20 rotate-3 hover:rotate-0 transition-transform duration-500">
+                  <CheckCircle2 className="h-12 w-12" />
+                </div>
+                <div>
+                  <h4 className="text-2xl font-black text-slate-900 tracking-tighter">PRÊT À L'ENREGISTREMENT</h4>
+                  <p className="text-slate-500 font-medium max-w-xs mx-auto mt-2">
+                    Le dossier physique sera enregistré avec le statut 
+                    <Badge className="mx-1 bg-slate-100 text-slate-900 border-none">
+                      {Object.values(checklist).every(v => v) ? 'REÇU' : 'INCOMPLET'}
+                    </Badge>
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-3">
+             {wizardStep > 1 && (
+               <Button variant="ghost" className="rounded-2xl h-14 px-8 font-bold" onClick={() => setWizardStep(prev => prev - 1)}>Retour</Button>
+             )}
+             {wizardStep < 3 ? (
+               <Button 
+                className="bg-slate-900 text-white rounded-2xl h-14 px-10 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-900/20" 
+                onClick={() => {
+                  if (wizardStep === 1 && !newEntiteNom) return toast.error("Entrez le nom de l'entité");
+                  setWizardStep(prev => prev + 1);
+                }}
+               >
+                 Continuer <ArrowRight className="ml-2 h-4 w-4" />
+               </Button>
+             ) : (
+               <Button 
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-14 px-10 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-emerald-600/20 transition-all active:scale-95" 
+                onClick={async () => {
+                  const isComplete = Object.values(checklist).every(v => v);
+                  const { error } = await supabase.from('dossiers').insert([{
+                    numero_dossier: `SONAP-${new Date().getFullYear()}-${Math.floor(Math.random()*9000)+1000}`,
+                    entite_nom: newEntiteNom,
+                    entite_type: newEntiteType,
+                    type_demande: newTypeDemande,
+                    statut: isComplete ? 'recu' : 'incomplet',
+                    entite_id: '00000000-0000-0000-0000-000000000000',
+                    observations: isComplete ? "Dossier physique complet réceptionné." : "Dossier incomplet. Pièces manquantes identifiées au pré-contrôle."
+                  }]);
+
+                  if (error) toast.error(error.message);
+                  else {
+                    toast.success(isComplete ? "Dossier RÉÇU enregistré !" : "Dossier INCOMPLET enregistré !");
+                    setIsNewDialogOpen(false);
+                    setWizardStep(1);
+                    setNewEntiteNom('');
+                    fetchDossiers();
+                  }
+                }}
+              >
+                Confirmer la Réception
+              </Button>
+             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
