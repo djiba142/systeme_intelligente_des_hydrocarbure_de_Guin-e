@@ -6,7 +6,6 @@ export type UserRole =
   | 'super_admin'
   | 'admin_etat'
   | 'inspecteur'
-  | 'analyste'
   | 'service_it'
   | 'secretaire_general'
   | 'directeur_general'
@@ -23,25 +22,8 @@ export type UserRole =
   | 'responsable_stations'
   | 'gestionnaire_livraisons'
   | 'operateur_entreprise'
-  | 'directeur_juridique'
-  | 'juriste'
-  | 'charge_conformite'
-  | 'assistant_juridique'
-  | 'directeur_financier'
-  | 'controleur_financier'
-  | 'comptable'
   | 'directeur_importation'
   | 'agent_importation'
-  | 'directeur_administratif'
-  | 'chef_service_administratif'
-  | 'agent_administratif'
-  | 'gestionnaire_documentaire'
-  | 'personnel_admin'
-  | 'directeur_logistique'
-  | 'agent_logistique'
-  | 'responsable_depots'
-  | 'responsable_transport'
-  | 'operateur_logistique'
   | 'responsable_stock'
   | 'agent_station'
   | 'technicien_aval';
@@ -77,8 +59,6 @@ export interface Dossier {
   date_soumission: string;
   updated_at: string;
   valide_par_dsa?: string;
-  valide_par_da?: string;
-  valide_par_djc?: string;
   valide_par_dsi?: string;
   valide_par_dg?: string;
   rccm_url?: string;
@@ -86,8 +66,7 @@ export interface Dossier {
   statuts_url?: string;
   autorisation_url?: string;
   date_validation_dsa?: string;
-  date_validation_da?: string;
-  date_validation_djc?: string;
+  date_validation_dsi?: string;
   date_validation_dg?: string;
 }
 
@@ -96,9 +75,8 @@ export type StationStatus =
   | 'fermee' 
   | 'en_travaux' 
   | 'suspendu_legal'
+  | 'attente_validation'
   | 'attente_dsa'      // Direction des Services Aval (Technique)
-  | 'attente_da'       // Direction Administrative
-  | 'attente_djc'      // Direction Juridique / Conformité
   | 'attente_dsi'      // Direction Service Information (Activation)
   | string;
 
@@ -106,9 +84,8 @@ export type EntrepriseStatus =
   | 'actif' 
   | 'suspendu' 
   | 'ferme'
+  | 'attente_validation'
   | 'attente_dsa'
-  | 'attente_da'
-  | 'attente_djc'
   | 'attente_dsi';
 
 export type ImportationStatus = 'prevu' | 'arrive' | 'en_dechargement' | 'termine' | string;

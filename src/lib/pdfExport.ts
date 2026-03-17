@@ -18,14 +18,11 @@ export type AppRole =
   | 'super_admin' | 'admin_etat' | 'directeur_general' | 'directeur_adjoint' | 'secretaire_general'
   | 'directeur_aval' | 'directeur_adjoint_aval' | 'chef_division_distribution' | 'chef_bureau_aval'
   | 'agent_supervision_aval' | 'controleur_distribution' | 'technicien_support_dsa' | 'technicien_flux'
-  | 'inspecteur' | 'analyste'
+  | 'inspecteur'
   | 'service_it' | 'responsable_entreprise' | 'responsable_stations' | 'gestionnaire_livraisons'
   | 'technicien_aval' | 'operateur_entreprise'
-  | 'directeur_juridique' | 'juriste' | 'charge_conformite' | 'assistant_juridique'
-  | 'directeur_financier' | 'controleur_financier' | 'comptable'
   | 'directeur_importation' | 'agent_importation' 
-  | 'directeur_administratif' | 'chef_service_administratif' | 'agent_administratif' | 'gestionnaire_documentaire'
-  | 'directeur_logistique' | 'responsable_depots' | 'responsable_transport' | 'operateur_logistique';
+  | 'responsable_stock' | 'agent_station';
 
 const ROLE_SIGNATURE: Record<string, { gauche: string; droite: string }> = {
   directeur_general:  { gauche: '',  droite: "LE DIRECTEUR GENERAL" },
@@ -36,10 +33,6 @@ const ROLE_SIGNATURE: Record<string, { gauche: string; droite: string }> = {
   chef_division_distribution: { gauche: '', droite: "LE CHEF DIVISION DISTRIBUTION" },
   inspecteur:         { gauche: '', droite: "L'INSPECTEUR SIHG" },
   analyste:           { gauche: '', droite: "L'ANALYSTE STRATEGIQUE" },
-  directeur_administratif: { gauche: '', droite: "LE DIRECTEUR ADMINISTRATIF" },
-  chef_service_administratif: { gauche: '', droite: "LE CHEF SERVICE ADMINISTRATIF" },
-  agent_administratif: { gauche: '', droite: "L'AGENT ADMINISTRATIF" },
-  gestionnaire_documentaire: { gauche: '', droite: "LE GESTIONNAIRE DOCUMENTAIRE" },
   service_it:         { gauche: '', droite: "LE RESPONSABLE S.I." },
   responsable_entreprise: { gauche: '', droite: "LE DIRECTEUR D'ENTREPRISE" },
   responsable_stations:   { gauche: '', droite: "LE RESPONSABLE STATIONS" },
@@ -47,13 +40,7 @@ const ROLE_SIGNATURE: Record<string, { gauche: string; droite: string }> = {
   operateur_entreprise:   { gauche: '', droite: "L'OPERATEUR LOGISTIQUE" },
   secretaire_general:     { gauche: '', droite: "LE SECRETAIRE GENERAL" },
   super_admin:            { gauche: '', droite: "L'ADMINISTRATEUR SYSTEME" },
-  directeur_juridique:    { gauche: '', droite: "LE DIRECTEUR JURIDIQUE" },
-  directeur_financier:    { gauche: '', droite: "LE DIRECTEUR FINANCIER" },
   directeur_importation:  { gauche: '', droite: "LE DIRECTEUR DES IMPORTATIONS" },
-  directeur_logistique:   { gauche: '', droite: "LE DIRECTEUR LOGISTIQUE" },
-  responsable_depots:     { gauche: '', droite: "LE RESPONSABLE DES DEPOTS" },
-  responsable_transport:  { gauche: '', droite: "LE RESPONSABLE TRANSPORT" },
-  operateur_logistique:   { gauche: '', droite: "L'OPERATEUR LOGISTIQUE" },
   DGA:                { gauche: '', droite: "SIGNATURE" },
   DSA:                { gauche: '', droite: "SIGNATURE" },
 };
@@ -238,7 +225,7 @@ const addSignaturesAtBottom = (doc: jsPDF, signerRole?: string, signerName?: str
   doc.setTextColor(...C.darkText);
 
   // Logic pour Double Validation (4 yeux)
-  const needsDoubleValidation = ['admin_etat', 'directeur_aval', 'directeur_general', 'secretaire_general', 'directeur_financier', 'directeur_importation', 'directeur_logistique', 'super_admin'].includes(role);
+  const needsDoubleValidation = ['admin_etat', 'directeur_aval', 'directeur_general', 'secretaire_general', 'directeur_importation', 'super_admin'].includes(role);
 
   if (needsDoubleValidation) {
      const sig = ROLE_SIGNATURE[role] || { gauche: '', droite: "L'AUTORITE COMPETENTE" };

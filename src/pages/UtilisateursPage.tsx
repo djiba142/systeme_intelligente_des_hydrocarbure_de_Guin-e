@@ -68,14 +68,10 @@ interface UserWithDetails {
 
 const ORG_LABELS: Record<string, string> = {
   admin_central: 'Administration Centrale',
-  analyse: 'Cellule d’Analyse Stratégique (CAS)',
-  planification_energetique: 'Cellule de Planification Énergétique',
   dsi: 'Direction des Systèmes Informatiques (DSI)',
   dsa: 'Direction des Services Aval',
   inspecteurs: 'Inspecteurs SONAP',
-  finance: 'Direction Administrative et Financière (DAF)',
   importation: 'Direction Importation / Approvisionnement',
-  juridique: 'Direction Juridique & Conformité (DJ/C)',
   entreprises: 'Siège Entreprise',
 };
 
@@ -93,22 +89,18 @@ const roleTheme: Record<AppRole, { color: string; bg: string; border: string; ic
   technicien_support_dsa: { color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100', iconColor: 'text-emerald-500' },
   technicien_flux: { color: 'text-emerald-500', bg: 'bg-emerald-50/30', border: 'border-emerald-100/50', iconColor: 'text-emerald-400' },
   inspecteur: { color: 'text-lime-700', bg: 'bg-lime-50', border: 'border-lime-200', iconColor: 'text-lime-600' },
-  analyste: { color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', iconColor: 'text-cyan-600' },
   service_it: { color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', iconColor: 'text-purple-600' },
   responsable_entreprise: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', iconColor: 'text-amber-600' },
   secretaire_general: { color: 'text-blue-800', bg: 'bg-blue-100', border: 'border-blue-300', iconColor: 'text-blue-700' },
   responsable_stations: { color: 'text-amber-700', bg: 'bg-amber-100', border: 'border-amber-300', iconColor: 'text-amber-600' },
   gestionnaire_livraisons: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', iconColor: 'text-orange-600' },
   operateur_entreprise: { color: 'text-amber-600', bg: 'bg-amber-50/50', border: 'border-amber-100', iconColor: 'text-amber-500' },
-  directeur_juridique: { color: 'text-indigo-900', bg: 'bg-indigo-50', border: 'border-indigo-300', iconColor: 'text-indigo-800' },
-  juriste: { color: 'text-indigo-700', bg: 'bg-indigo-50/50', border: 'border-indigo-100', iconColor: 'text-indigo-600' },
-  charge_conformite: { color: 'text-indigo-600', bg: 'bg-indigo-50/30', border: 'border-indigo-100/50', iconColor: 'text-indigo-500' },
-  assistant_juridique: { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', iconColor: 'text-slate-500' },
-  directeur_financier: { color: 'text-blue-900', bg: 'bg-blue-50', border: 'border-blue-300', iconColor: 'text-blue-800' },
-  controleur_financier: { color: 'text-blue-700', bg: 'bg-blue-50/50', border: 'border-blue-100', iconColor: 'text-blue-600' },
-  comptable: { color: 'text-blue-600', bg: 'bg-blue-50/30', border: 'border-blue-100/50', iconColor: 'text-blue-500' },
+
   directeur_importation: { color: 'text-indigo-900', bg: 'bg-indigo-50', border: 'border-indigo-300', iconColor: 'text-indigo-800' },
   agent_importation: { color: 'text-indigo-700', bg: 'bg-indigo-50/50', border: 'border-indigo-100', iconColor: 'text-indigo-600' },
+  responsable_stock: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', iconColor: 'text-emerald-600' },
+  agent_station: { color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100', iconColor: 'text-emerald-500' },
+  technicien_aval: { color: 'text-emerald-500', bg: 'bg-emerald-50/30', border: 'border-emerald-100', iconColor: 'text-emerald-400' },
 };
 
 const DEFAULT_THEME = { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200', iconColor: 'text-slate-600' };
@@ -190,14 +182,6 @@ export default function UtilisateursPage() {
       // La DSA voit le terrain et les entreprises, mais pas le top management SONAP ou la DSI
       const sensitiveRoles: AppRole[] = ['super_admin', 'service_it', 'directeur_general', 'directeur_adjoint', 'admin_etat'];
       if (user.role && sensitiveRoles.includes(user.role)) return false;
-    } else if (currentUserRole === 'directeur_financier') {
-      // La DAF voit son pôle
-      const dafRoles: AppRole[] = ['directeur_financier', 'controleur_financier', 'comptable'];
-      if (user.role && !dafRoles.includes(user.role)) return false;
-    } else if (currentUserRole === 'directeur_juridique') {
-      // Le Juridique voit son pôle
-      const jurRoles: AppRole[] = ['directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique'];
-      if (user.role && !jurRoles.includes(user.role)) return false;
     } else if (currentUserRole === 'directeur_importation') {
       // L'Import voit son pôle
       const impRoles: AppRole[] = ['directeur_importation', 'agent_importation'];
@@ -225,8 +209,6 @@ export default function UtilisateursPage() {
     currentUserRole === 'directeur_aval' || 
     currentUserRole === 'directeur_adjoint_aval' ||
     currentUserRole === 'service_it' ||
-    currentUserRole === 'directeur_financier' ||
-    currentUserRole === 'directeur_juridique' ||
     currentUserRole === 'directeur_importation';
 
   const handleEdit = (user: UserWithDetails) => {
@@ -327,7 +309,7 @@ export default function UtilisateursPage() {
                   </div>
                   <Badge variant="outline" className="text-[10px] border-blue-200 text-blue-700 bg-blue-50/50">SONAP</Badge>
                 </div>
-                <p className="text-2xl font-black">{(usersByRole['directeur_general'] || 0) + (usersByRole['directeur_adjoint'] || 0) + (usersByRole['admin_etat'] || 0) + (usersByRole['directeur_juridique'] || 0) + (usersByRole['directeur_financier'] || 0) + (usersByRole['directeur_importation'] || 0)}</p>
+                <p className="text-2xl font-black">{(usersByRole['directeur_general'] || 0) + (usersByRole['directeur_adjoint'] || 0) + (usersByRole['admin_etat'] || 0) + (usersByRole['directeur_importation'] || 0)}</p>
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">Management & Directions</p>
               </CardContent>
             </Card>
@@ -572,7 +554,6 @@ export default function UtilisateursPage() {
                          role === 'chef_bureau_aval' ? 'from-teal-500 to-teal-700' :
                          role === 'agent_supervision_aval' ? 'from-teal-400 to-teal-600' :
                          role === 'inspecteur' ? 'from-lime-500 to-lime-700' :
-                         role === 'analyste' ? 'from-cyan-500 to-cyan-700' :
                          role === 'service_it' ? 'from-purple-500 to-purple-700' :
                         'from-amber-500 to-amber-700'
                       )}>

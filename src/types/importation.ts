@@ -1,13 +1,11 @@
 
 export type ImportWorkflowStatus = 
-  | 'brouillon' 
-  | 'validation_juridique' 
-  | 'attente_paiement' 
-  | 'en_transit' 
-  | 'arrive_conakry' 
+  | 'en_preparation' 
+  | 'attente_juridique' 
+  | 'en_transport' 
+  | 'arrive' 
   | 'receptionne' 
-  | 'distribue' 
-  | 'cloture';
+  | 'rejete';
 
 export interface ImportDossier {
   id: string;

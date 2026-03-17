@@ -42,31 +42,13 @@ const ALL_APP_ROLES = [
   'technicien_support_dsa',
   'technicien_flux',
   'inspecteur',
-  'analyste',
   'service_it',
   'responsable_entreprise',
   'responsable_stations',
   'gestionnaire_livraisons',
   'operateur_entreprise',
-  'directeur_juridique',
-  'juriste',
-  'charge_conformite',
-  'assistant_juridique',
-  'directeur_financier',
-  'controleur_financier',
-  'comptable',
   'directeur_importation',
   'agent_importation',
-  'directeur_administratif',
-  'chef_service_administratif',
-  'agent_administratif',
-  'gestionnaire_documentaire',
-  'directeur_logistique',
-  'agent_logistique',
-  'responsable_depots',
-  'responsable_transport',
-  'operateur_logistique',
-  'personnel_admin',
   'responsable_stock',
   'agent_station',
   'technicien_aval',
@@ -75,29 +57,19 @@ const ALL_APP_ROLES = [
 export const POSTE_ROLES: Record<string, AppRole> = {
   'Directeur DSI': 'service_it',
   'Directeur des Services Aval (DSA)': 'directeur_aval',
-  'Directeur Financier (DAF)': 'directeur_financier',
-  'Directeur Juridique & Conformité': 'directeur_juridique',
+
   'Directeur Importation / Approvisionnement': 'directeur_importation',
   'Administrateur Central État (Régulation)': 'admin_etat',
   'Directeur Général (DG)': 'directeur_general',
   'Directeur Général Adjoint (DGA)': 'directeur_adjoint',
-  'Directeur Administratif (DA)': 'directeur_administratif',
-  'Directeur Logistique': 'directeur_logistique',
 };
 
 // Organigramme Officiel SONAP / SIHG
 const ORGANISATIONS = [
   { id: 'admin_central', label: 'Administration Centrale' },
-  { id: 'analyse', label: 'Cellule d’Analyse Stratégique (CAS)' },
-
-  { id: 'planification_energetique', label: 'Cellule de Planification Énergétique' },
   { id: 'dsi', label: 'Direction des Systèmes Informatiques (DSI)' },
   { id: 'dsa', label: 'Direction des Services Aval' },
   { id: 'inspecteurs', label: 'Corps National des Inspecteurs' },
-  { id: 'juridique', label: 'Direction Juridique & Conformité (DJ/C)' },
-  { id: 'administratif', label: 'Direction Administrative' },
-  { id: 'logistique', label: 'Direction Logistique' },
-  { id: 'finance', label: 'Direction Administrative et Financière (DAF)' },
   { id: 'importation', label: 'Direction Importation / Approvisionnement' },
   { id: 'entreprises', label: 'Entreprises Pétrolières Agréées (Siège)' },
   { id: 'stations', label: 'Stations-Service (Opérations)' },
@@ -111,22 +83,7 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
     { label: '2. Directeur Général Adjoint (DGA)', role: 'directeur_adjoint' },
     { label: '3. Administrateur Central État (Régulation)', role: 'admin_etat' },
     { label: '4. Secrétaire Général (A.C.)', role: 'secretaire_general' },
-    { label: '5. Analyste Régulation Nationale', role: 'analyste' },
-    { label: '6. Inspecteur Régulation Pétrolière', role: 'inspecteur' },
-  ],
-  // ─── Cellule d'Analyse Stratégique ──────────────────────────────────────
-  analyse: [
-    { label: 'Analyste National (CAS)', role: 'analyste' },
-    { label: 'Analyste Stratégique', role: 'analyste' },
-    { label: 'Responsable Prévisions', role: 'analyste' },
-    { label: 'Expert Sécurité Énergétique', role: 'analyste' },
-  ],
-
-  // ─── Cellule de Planification Énergétique ────────────────────────────────
-  planification_energetique: [
-    { label: 'Chef de la Cellule de Planification Énergétique', role: 'analyste' },
-    { label: 'Analyste en Planification Énergétique', role: 'analyste' },
-    { label: 'Statisticien Énergétique', role: 'analyste' },
+    { label: '5. Inspecteur Régulation Pétrolière', role: 'inspecteur' },
   ],
   // ─── DSI — Direction des Systèmes Informatiques ─────────────────────────────
   dsi: [
@@ -155,20 +112,6 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
     { label: 'Inspecteur Préfectoral', role: 'inspecteur' },
     { label: 'Inspecteur Local (Terrain)', role: 'inspecteur' },
   ],
-  // ─── Direction Juridique & Conformité ─────────────────────────────────────
-  juridique: [
-    { label: 'Directeur Juridique & Conformité', role: 'directeur_juridique' },
-    { label: 'Juriste / Conseiller Juridique', role: 'juriste' },
-    { label: 'Chargé de Conformité Réglementaire', role: 'charge_conformite' },
-    { label: 'Assistant Administratif DJ/C', role: 'assistant_juridique' },
-  ],
-  // ─── Direction Administrative et Financière (DAF) ────────────────────────
-  finance: [
-    { label: 'Directeur Financier (DAF)', role: 'directeur_financier' },
-    { label: 'Contrôleur Financier', role: 'controleur_financier' },
-    { label: 'Chef de Service Comptabilité', role: 'comptable' },
-    { label: 'Trésorier', role: 'comptable' },
-  ],
   // ─── Direction Importation / Approvisionnement ───────────────────────────
   importation: [
     { label: 'Directeur Importation / Approvisionnement', role: 'directeur_importation' },
@@ -177,22 +120,6 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
     { label: 'Analyste Approvisionnement', role: 'agent_importation' },
   ],
 
-  // ─── Direction Administrative ──────────────────────────────
-  administratif: [
-    { label: 'Directeur Administratif (DA)', role: 'directeur_administratif' },
-    { label: 'Chef de Service Administratif', role: 'chef_service_administratif' },
-    { label: 'Agent Administratif', role: 'agent_administratif' },
-    { label: 'Gestionnaire Documentaire', role: 'gestionnaire_documentaire' },
-    { label: 'Personnel Administratif', role: 'personnel_admin' },
-  ],
-  // ─── Direction Logistique ──────────────────────────────────
-  logistique: [
-    { label: 'Directeur Logistique', role: 'directeur_logistique' },
-    { label: 'Agent Logistique', role: 'agent_logistique' },
-    { label: 'Responsable des Dépôts', role: 'responsable_depots' },
-    { label: 'Responsable Transport', role: 'responsable_transport' },
-    { label: 'Opérateur Logistique Terrain', role: 'operateur_logistique' },
-  ],
   // ─── Entreprises Pétrolières ───────────────────────────────────────────────
   entreprises: [
     { label: '1. Directeur d\'Entreprise Pétrolière', role: 'responsable_entreprise' },
@@ -501,13 +428,9 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
         'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution',
         'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
         'technicien_support_dsa', 'technicien_flux',
-        'inspecteur', 'analyste', 'service_it', 'responsable_entreprise',
+        'inspecteur', 'service_it', 'responsable_entreprise',
         'operateur_entreprise',
-        'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique',
-        'directeur_financier', 'controleur_financier', 'comptable',
         'directeur_importation', 'agent_importation',
-        'directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'gestionnaire_documentaire', 'personnel_admin',
-        'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique',
         'responsable_stock', 'agent_station', 'technicien_aval'
       ];
     }
@@ -519,19 +442,13 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
         'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
         'technicien_support_dsa', 'technicien_flux', 'technicien_aval',
         'responsable_entreprise', 'operateur_entreprise', 'responsable_stations', 'responsable_stock', 'agent_station',
-        'inspecteur', 'analyste',
-        'directeur_financier', 'controleur_financier', 'comptable',
-        'directeur_importation', 'agent_importation',
-        'directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'gestionnaire_documentaire', 'personnel_admin',
-        'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique'
+        'inspecteur',
+        'directeur_importation', 'agent_importation'
       ];
     }
 
     // 3️⃣ Directions Thématiques
-    if (currentUserRole === 'directeur_juridique') return ['juriste', 'charge_conformite', 'assistant_juridique'];
     if (currentUserRole === 'directeur_importation') return ['agent_importation'];
-    if (currentUserRole === 'directeur_administratif') return ['chef_service_administratif', 'agent_administratif', 'gestionnaire_documentaire', 'personnel_admin'];
-    if (currentUserRole === 'directeur_logistique') return ['agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique'];
     if (currentUserRole === 'directeur_aval') return ['directeur_adjoint_aval', 'chef_division_distribution', 'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'technicien_aval'];
 
     if (currentUserRole === 'service_it') {
@@ -540,11 +457,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
         'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution',
         'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
         'technicien_support_dsa', 'technicien_flux', 'technicien_aval',
-        'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique',
-        'directeur_financier', 'controleur_financier', 'comptable',
         'directeur_importation', 'agent_importation',
-        'directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'gestionnaire_documentaire', 'personnel_admin',
-        'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique',
         'responsable_stock', 'agent_station'
       ];
     }
@@ -572,11 +485,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
     }
 
     // Direction specific filters
-    if (currentUserRole === 'directeur_juridique') return org.id === 'juridique';
-    if (currentUserRole === 'directeur_financier') return org.id === 'finance';
     if (currentUserRole === 'directeur_importation') return org.id === 'importation';
-    if (currentUserRole === 'directeur_administratif') return org.id === 'administratif';
-    if (currentUserRole === 'directeur_logistique') return org.id === 'logistique';
 
     // Admin Etat / DG can see everything related to business but not system
     if (['admin_etat', 'directeur_general', 'directeur_adjoint'].includes(currentUserRole || '')) {
@@ -725,12 +634,9 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
                         'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution',
                         'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
                         'technicien_support_dsa', 'technicien_flux', 'technicien_aval',
-                        'inspecteur', 'analyste', 
-                        'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique',
-                        'directeur_financier', 'controleur_financier', 'comptable',
+                        'inspecteur', 
                         'directeur_importation', 'agent_importation',
-                        'directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'gestionnaire_documentaire', 'personnel_admin',
-                        'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique'
+                        'directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'personnel_admin', 'gestionnaire_documentaire'
                       ].includes(r)).map(r => (
                         <SelectItem key={r} value={r} className="text-xs">{ROLE_LABELS[r]}</SelectItem>
                       ))}

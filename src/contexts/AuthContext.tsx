@@ -19,31 +19,14 @@ export type AppRole =
   | 'technicien_support_dsa'
   | 'technicien_flux'
   | 'inspecteur'
-  | 'analyste'
   | 'service_it'
   | 'responsable_entreprise'
   | 'responsable_stations'
   | 'gestionnaire_livraisons'
   | 'operateur_entreprise'
-  | 'directeur_juridique'
-  | 'juriste'
-  | 'charge_conformite'
-  | 'assistant_juridique'
-  | 'directeur_financier'
-  | 'controleur_financier'
-  | 'comptable'
+
   | 'directeur_importation'
   | 'agent_importation'
-  | 'directeur_administratif'
-  | 'chef_service_administratif'
-  | 'agent_administratif'
-  | 'gestionnaire_documentaire'
-  | 'directeur_logistique'
-  | 'agent_logistique'
-  | 'responsable_depots'
-  | 'responsable_transport'
-  | 'operateur_logistique'
-  | 'personnel_admin'
   | 'responsable_stock'
   | 'agent_station'
   | 'technicien_aval';
@@ -144,44 +127,27 @@ const ROLE_HIERARCHY: Record<AppRole, number> = {
   'technicien_support_dsa': 8,
   'technicien_flux': 8,
   'inspecteur': 9,
-  'analyste': 10,
   'service_it': 1,
   'responsable_entreprise': 12,
   'responsable_stations': 13,
   'gestionnaire_livraisons': 13,
   'operateur_entreprise': 14,
-  'directeur_juridique': 4,
-  'juriste': 5,
-  'charge_conformite': 6,
-  'assistant_juridique': 7,
-  'directeur_financier': 4,
-  'controleur_financier': 5,
-  'comptable': 6,
+
   'directeur_importation': 4,
   'agent_importation': 5,
-  'directeur_administratif': 4,
-  'chef_service_administratif': 5,
-  'agent_administratif': 6,
-  'gestionnaire_documentaire': 7,
-  'directeur_logistique': 4,
-  'agent_logistique': 5,
-  'responsable_depots': 6,
-  'responsable_transport': 6,
-  'operateur_logistique': 7,
-  'personnel_admin': 6,
   'responsable_stock': 13,
   'agent_station': 14,
   'technicien_aval': 8,
 };
 
 // Rôles avec accès en lecture seule (pas de modification de données métier)
-const READ_ONLY_ROLES: AppRole[] = ['inspecteur', 'analyste', 'agent_supervision_aval', 'technicien_support_dsa', 'secretaire_general', 'directeur_general', 'directeur_adjoint', 'service_it'];
+const READ_ONLY_ROLES: AppRole[] = ['inspecteur', 'agent_supervision_aval', 'technicien_support_dsa', 'secretaire_general', 'directeur_general', 'directeur_adjoint', 'service_it'];
 
 // Rôles pouvant gérer les utilisateurs
 const USER_MANAGEMENT_ROLES: AppRole[] = [
   'super_admin', 'admin_etat',
   'directeur_aval', 'directeur_adjoint_aval', 'service_it', 'responsable_entreprise',
-  'directeur_financier', 'directeur_importation', 'directeur_juridique', 'directeur_administratif', 'directeur_logistique'
+  'directeur_importation'
 ];
 
 // Rôles pouvant ajouter des observations
@@ -203,17 +169,22 @@ const DATA_MODIFY_ROLES: AppRole[] = [
 const STATION_MANAGEMENT_ROLES: AppRole[] = [
   'super_admin',
   'admin_etat',
+  'directeur_general',
+  'directeur_adjoint',
   'directeur_aval',
   'directeur_adjoint_aval',
+  'chef_division_distribution',
   'chef_bureau_aval',
-  'chef_bureau_aval'
 ];
 
 // Seul admin_etat peut créer des entreprises (DG/DGA consultent seulement)
 const ENTREPRISE_MANAGEMENT_ROLES: AppRole[] = [
   'super_admin',
   'admin_etat',
-  'admin_etat'
+  'directeur_general',
+  'directeur_adjoint',
+  'directeur_aval',
+  'directeur_adjoint_aval',
 ];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -436,8 +407,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return '/dashboard/admin-etat';
       case 'inspecteur':
         return '/dashboard/inspecteur';
-      case 'analyste':
-        return '/dashboard/analyste';
       case 'service_it':
         return '/dashboard/service-it';
       case 'directeur_aval':
@@ -457,30 +426,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       case 'responsable_stock':
       case 'agent_station':
         return '/dashboard/entreprise';
-      case 'directeur_juridique':
-      case 'juriste':
-      case 'charge_conformite':
-      case 'assistant_juridique':
-        return '/dashboard/juridique';
-      case 'directeur_financier':
-      case 'controleur_financier':
-      case 'comptable':
-        return '/dashboard/finance';
+
       case 'directeur_importation':
       case 'agent_importation':
         return '/dashboard/importation';
-      case 'directeur_administratif':
-      case 'chef_service_administratif':
-      case 'agent_administratif':
-      case 'gestionnaire_documentaire':
-      case 'personnel_admin':
-        return '/dashboard/administratif';
-      case 'directeur_logistique':
-      case 'agent_logistique':
-      case 'responsable_depots':
-      case 'responsable_transport':
-      case 'operateur_logistique':
-        return '/dashboard/logistique';
       default:
         return '/auth';
     }
@@ -778,31 +727,14 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   technicien_support_dsa: 'Technicien Support DSA',
   technicien_flux: 'Technicien Flux Opérationnels',
   inspecteur: 'Corps des Inspecteurs (Contrôle & Audit)',
-  analyste: 'Cellule d’Analyse Stratégique (CAS)',
   service_it: 'Direction des Systèmes Informatiques (DSI)',
   responsable_entreprise: 'Directeur Entreprise Pétrolière',
   responsable_stations: 'Responsable Stations-Service (Entreprise)',
   gestionnaire_livraisons: 'Gestionnaire Livraisons (Entreprise)',
   operateur_entreprise: 'Opérateur Logistique (Entreprise)',
-  directeur_juridique: 'Directeur Juridique & Conformité (DJ/C)',
-  juriste: 'Juriste / Conseiller Juridique',
-  charge_conformite: 'Chargé de Conformité réglementaire',
-  assistant_juridique: 'Assistant Administratif DJ/C',
-  directeur_financier: 'Directeur Administratif et Financier (DAF)',
-  controleur_financier: 'Contrôleur Financier (DAF)',
-  comptable: 'Comptable (DAF)',
+
   directeur_importation: 'Directeur Importation / Approvisionnement',
   agent_importation: 'Agent Importation (Suivi Flux)',
-  directeur_administratif: 'Directeur Administratif (DA)',
-  chef_service_administratif: 'Chef de Service Administratif',
-  agent_administratif: 'Agent Administratif',
-  gestionnaire_documentaire: 'Gestionnaire Documentaire',
-  directeur_logistique: 'Directeur de la Logistique',
-  agent_logistique: 'Agent Logistique',
-  responsable_depots: 'Responsable des Dépôts',
-  responsable_transport: 'Responsable Transport & Flotte',
-  operateur_logistique: 'Opérateur Logistique Terrain',
-  personnel_admin: 'Personnel Administratif',
   responsable_stock: 'Responsable Stock Station',
   agent_station: 'Agent de Station',
   technicien_aval: 'Technicien Services Aval (DSA)',
@@ -823,31 +755,14 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   technicien_support_dsa: 'Gère les problèmes techniques du système et aide les utilisateurs du module Aval.',
   technicien_flux: 'Suit les flux de carburant entre les dépôts, les entreprises et les stations.',
   inspecteur: 'Agent de contrôle du secteur pétrolier. Inspection des stations, vérification des stocks et des prix officiels.',
-  analyste: 'Analyse des données nationales. Production de rapports statistiques et prévision des risques.',
   service_it: 'Ingénieurs DSI. Maintenance technique, gestion des serveurs, base de données, réseau et support technique. Ne modifie pas les données pétrolières.',
   responsable_entreprise: 'Directeur de compagnie pétrolière agréée. Supervise les stations, stocks et livraisons de son entreprise. Ne modifie ni prix ni quotas.',
   responsable_stations: 'Responsable Stations-Service. Surveille les stocks, signale les ruptures et suit l\'activité des stations de son entreprise.',
   gestionnaire_livraisons: 'Gestionnaire Livraisons. Enregistre les départs de camions, suit les livraisons et confirme la réception du carburant.',
   operateur_entreprise: 'Opérateur logistique de l\'entreprise. Organise les camions citernes et planifie les livraisons.',
-  directeur_juridique: 'Responsable de la Direction Juridique. Validation finale de la conformité légale.',
-  juriste: 'Analyse juridique des dossiers, rédaction de contrats et gestion des litiges.',
-  charge_conformite: 'Garant du respect des normes internes et de la réglementation nationale.',
-  assistant_juridique: 'Suivi administratif et archivage légal au sein de la Direction Juridique.',
-  directeur_financier: 'Responsable DAF. Pilotage du budget et validation finale des paiements.',
-  controleur_financier: 'Vérification de la conformité des factures et suivi budgétaire.',
-  comptable: 'Enregistrement des factures et préparation des ordres de paiement.',
+
   directeur_importation: 'Supervise le processus d’achat et d’arrivée des produits pétroliers.',
   agent_importation: 'Saisie des informations de cargaison et suivi des navires pétroliers.',
-  directeur_administratif: 'Supervision administrative, gestion des agréments et conformité des dossiers entreprises.',
-  chef_service_administratif: 'Encadrement du personnel administratif et suivi des dossiers complexes.',
-  agent_administratif: 'Saisie et vérification des dossiers administratifs des opérateurs.',
-  gestionnaire_documentaire: 'Archivage, numérisation et gestion de la base documentaire réglementaire.',
-  directeur_logistique: 'Pilotage de la chaîne logistique nationale, gestion des dépôts et du transport.',
-  agent_logistique: 'Suivi opérationnel des mouvements de produits et coordination des flux.',
-  responsable_depots: 'Supervision technique et administrative d’un ou plusieurs dépôts pétroliers.',
-  responsable_transport: 'Gestion de la flotte de camions-citernes et de la sécurité du transport.',
-  operateur_logistique: 'Agent de terrain pour le suivi des chargements et déchargements.',
-  personnel_admin: 'Rôle administratif polyvalent pour la gestion des services internes.',
   responsable_stock: 'Gestion locale des stocks au niveau d\'une station pétrolière.',
   agent_station: 'Personnel de service en station-service.',
   technicien_aval: 'Expert technique pour le support et le déploiement des outils de suivi Aval.',

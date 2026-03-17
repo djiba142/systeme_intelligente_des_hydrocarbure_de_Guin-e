@@ -66,19 +66,8 @@ export default function ProfilPage() {
     super_admin: 'from-indigo-500 to-indigo-700',
     admin_etat: 'from-blue-500 to-blue-700',
     inspecteur: 'from-teal-500 to-teal-700',
-    analyste: 'from-cyan-500 to-cyan-700',
-    directeur_administratif: 'from-slate-500 to-slate-700',
-    chef_service_administratif: 'from-slate-500 to-slate-700',
-    agent_administratif: 'from-slate-500 to-slate-700',
-    gestionnaire_documentaire: 'from-slate-500 to-slate-700',
-    directeur_logistique: 'from-emerald-600 to-emerald-800',
-    responsable_depots: 'from-emerald-500 to-emerald-700',
-    responsable_transport: 'from-emerald-500 to-emerald-700',
-    operateur_logistique: 'from-emerald-500 to-emerald-700',
     service_it: 'from-purple-500 to-purple-700',
-    personnel_admin: 'from-slate-500 to-slate-700',
     responsable_entreprise: 'from-amber-500 to-amber-700',
-    gestionnaire_station: 'from-orange-500 to-orange-700',
   };
 
   return (

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Plus, AlertTriangle, RefreshCw, Loader2, ChevronLeft, ChevronRight, Shield, Download } from 'lucide-react';
+import { Search, Plus, AlertTriangle, RefreshCw, Loader2, ChevronLeft, ChevronRight, Shield, Download, CheckCircle2, XCircle } from 'lucide-react';
 import { generateExcelReport } from '@/lib/excelExport';
 // ... other imports stay same, but ensure they are at the top
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -324,7 +324,7 @@ export default function StationsPage() {
         stock_gasoil: 0,
         stock_gpl: 0,
         stock_lubrifiants: 0,
-        statut: (['super_admin', 'admin_etat', 'secretaire_general'].includes(currentUserRole || '')) ? 'ouverte' : 'attente_dsa',
+        statut: (['directeur_aval', 'directeur_adjoint_aval'].includes(currentUserRole || '')) ? 'attente_validation' : 'ouverte',
         gestionnaire_nom: stationForm.gestionnaire_nom?.trim() || null,
         gestionnaire_telephone: stationForm.gestionnaire_telephone?.trim() || null,
         gestionnaire_email: stationForm.gestionnaire_email?.trim() || null,
@@ -335,8 +335,10 @@ export default function StationsPage() {
       if (error) throw error;
 
       toast({
-        title: 'Succès',
-        description: `${stationForm.nom} (${stationForm.code}) a été créée`,
+        title: (['directeur_aval', 'directeur_adjoint_aval'].includes(currentUserRole || '')) ? 'Demande envoyée' : 'Succès',
+        description: (['directeur_aval', 'directeur_adjoint_aval'].includes(currentUserRole || '')) 
+          ? `${stationForm.nom} a été créée et est en attente de validation par l'Administration Centrale.` 
+          : `${stationForm.nom} (${stationForm.code}) a été créée`,
       });
 
       setIsStationDialogOpen(false);
@@ -374,6 +376,38 @@ export default function StationsPage() {
     }
   };
 
+  const handleValidateStation = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stations')
+        .update({ statut: 'ouverte' })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: 'Station validée', description: 'La station est maintenant ouverte et active.' });
+      await fetchData();
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: err.message });
+    }
+  };
+
+  const handleRejectStation = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stations')
+        .update({ statut: 'fermee' })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: 'Demande rejetée', description: 'La création de la station a été rejetée.' });
+      await fetchData();
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: err.message });
+    }
+  };
+
+  const isAdminCentral = ['super_admin', 'admin_etat', 'directeur_general', 'directeur_adjoint'].includes(currentUserRole || '');
+
   const openStationDialog = () => {
     setStationForm(prev => ({
       ...prev,
@@ -397,7 +431,7 @@ export default function StationsPage() {
               <AlertTriangle className="h-4 w-4 mr-1" />
               Alertes ({warningCount})
             </TabsTrigger>
-            {(['admin_etat', 'super_admin', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'directeur_general', 'directeur_adjoint', 'directeur_juridique', 'juriste'].includes(currentUserRole || '')) && (
+            {(['super_admin', 'admin_etat', 'directeur_general', 'directeur_adjoint', 'directeur_aval', 'directeur_adjoint_aval'].includes(currentUserRole || '')) && (
               <TabsTrigger value="pending" className="text-blue-600 data-[state=active]:text-blue-600 font-bold">
                  <Shield className="h-4 w-4 mr-1" />
                  À Valider ({pendingCount})
@@ -458,7 +492,7 @@ export default function StationsPage() {
           </SelectContent>
         </Select>
 
-        {(currentUserRole === 'super_admin' || currentUserRole === 'admin_etat' || currentUserRole === 'directeur_general' || currentUserRole === 'directeur_adjoint' || currentUserRole === 'analyste') && (
+        {(currentUserRole === 'super_admin' || currentUserRole === 'admin_etat' || currentUserRole === 'directeur_general' || currentUserRole === 'directeur_adjoint') && (
           <Select value={selectedEntreprise} onValueChange={setSelectedEntreprise}>
             <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Entreprise" />
@@ -482,7 +516,38 @@ export default function StationsPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {paginatedStations.map(station => (
-              <StationCard key={station.id} station={station} />
+              <div key={station.id} className="relative">
+                <StationCard station={station} />
+                {station.statut === 'attente_validation' && isAdminCentral && (
+                  <div className="flex gap-2 mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleValidateStation(station.id);
+                      }}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Valider
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="flex-1 gap-1 font-bold text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRejectStation(station.id);
+                      }}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Rejeter
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 

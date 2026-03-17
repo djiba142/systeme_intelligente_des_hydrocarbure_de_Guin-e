@@ -79,7 +79,7 @@ const reportTypes: ReportType[] = [
     icon: TrendingUp,
     frequency: 'Hebdomadaire',
     lastGenerated: '08/03/2026',
-    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_administratif', 'directeur_juridique', 'juriste', 'charge_conformite', 'agent_supervision_aval', 'inspecteur', 'personnel_admin']
+    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'agent_supervision_aval', 'inspecteur']
   },
   {
     id: 'performance-entreprises',
@@ -88,7 +88,7 @@ const reportTypes: ReportType[] = [
     icon: BarChart3,
     frequency: 'Mensuel',
     lastGenerated: '01/03/2026',
-    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_administratif', 'chef_service_administratif', 'directeur_aval', 'directeur_adjoint_aval', 'analyste', 'inspecteur', 'directeur_juridique', 'juriste', 'charge_conformite', 'personnel_admin']
+    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'inspecteur']
   },
   {
     id: 'prevision-penurie',
@@ -142,7 +142,7 @@ const reportTypes: ReportType[] = [
     icon: FileText,
     frequency: 'Hebdomadaire',
     lastGenerated: '09/03/2026',
-    roles: ['inspecteur', 'super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_juridique', 'juriste', 'charge_conformite']
+    roles: ['inspecteur', 'super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat']
   },
   {
     id: 'conformite-prix',
@@ -151,7 +151,7 @@ const reportTypes: ReportType[] = [
     icon: AlertCircle,
     frequency: 'Hebdomadaire',
     lastGenerated: '09/03/2026',
-    roles: ['inspecteur', 'super_admin', 'directeur_general', 'directeur_juridique', 'charge_conformite']
+    roles: ['inspecteur', 'super_admin', 'directeur_general', 'admin_etat']
   },
   {
     id: 'sante-systeme',
@@ -161,15 +161,6 @@ const reportTypes: ReportType[] = [
     frequency: 'Quotidien',
     lastGenerated: 'En temps réel',
     roles: ['service_it', 'super_admin', 'directeur_general']
-  },
-  {
-    id: 'bilan-financier',
-    title: 'Bilan Financier DAF',
-    description: 'État global des budgets, paiements et factures en attente',
-    icon: FileText,
-    frequency: 'Mensuel',
-    lastGenerated: 'En temps réel',
-    roles: ['super_admin', 'directeur_financier', 'controleur_financier', 'comptable', 'directeur_general', 'directeur_adjoint', 'secretaire_general']
   }
 ];
 

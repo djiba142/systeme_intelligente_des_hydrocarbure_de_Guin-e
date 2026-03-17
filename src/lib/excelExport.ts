@@ -11,14 +11,11 @@ export type AppRole =
   | 'super_admin' | 'admin_etat' | 'directeur_general' | 'directeur_adjoint' | 'secretaire_general'
   | 'directeur_aval' | 'directeur_adjoint_aval' | 'chef_division_distribution' | 'chef_bureau_aval'
   | 'agent_supervision_aval' | 'controleur_distribution' | 'technicien_support_dsa' | 'technicien_flux'
-  | 'inspecteur' | 'analyste'
+  | 'inspecteur'
   | 'service_it' | 'responsable_entreprise' | 'responsable_stations' | 'gestionnaire_livraisons'
   | 'technicien_aval' | 'operateur_entreprise'
-  | 'directeur_juridique' | 'juriste' | 'charge_conformite' | 'assistant_juridique'
-  | 'directeur_financier' | 'controleur_financier' | 'comptable'
   | 'directeur_importation' | 'agent_importation' 
-  | 'directeur_logistique' | 'agent_logistique' | 'responsable_depots' | 'responsable_transport' | 'operateur_logistique'
-  | 'personnel_admin' | 'directeur_financier' | 'directeur_importation' | 'directeur_juridique';
+  | 'responsable_stock' | 'agent_station';
 
 const ROLE_SIGNATURE: Record<string, { gauche: string; droite: string }> = {
   directeur_general:  { gauche: '',  droite: "LE DIRECTEUR GÉNÉRAL" },
@@ -29,28 +26,14 @@ const ROLE_SIGNATURE: Record<string, { gauche: string; droite: string }> = {
   chef_division_distribution: { gauche: '', droite: "LE CHEF DIVISION DISTRIBUTION" },
   inspecteur:         { gauche: '', droite: "L'INSPECTEUR SIHG" },
   analyste:           { gauche: '', droite: "L'ANALYSTE STRATÉGIQUE" },
-  directeur_administratif: { gauche: '', droite: "LE DIRECTEUR ADMINISTRATIF" },
-  chef_service_administratif: { gauche: '', droite: "LE CHEF SERVICE ADMINISTRATIF" },
-  agent_administratif: { gauche: '', droite: "L'AGENT ADMINISTRATIF" },
-  gestionnaire_documentaire: { gauche: '', droite: "LE GESTIONNAIRE DOCUMENTAIRE" },
   service_it:         { gauche: '', droite: "LE RESPONSABLE S.I." },
   responsable_entreprise: { gauche: '', droite: "LE DIRECTEUR D'ENTREPRISE" },
   responsable_stations:   { gauche: '', droite: "LE RESPONSABLE STATIONS" },
   gestionnaire_livraisons: { gauche: '', droite: "LE GESTIONNAIRE LIVRAISONS" },
   secretaire_general:     { gauche: '', droite: "LE SECRÉTAIRE GÉNÉRAL" },
   super_admin:            { gauche: '', droite: "L'ADMINISTRATEUR SYSTÈME" },
-  directeur_juridique:    { gauche: '', droite: "LE DIRECTEUR JURIDIQUE" },
-  directeur_financier:    { gauche: '', droite: "LE DIRECTEUR FINANCIER" },
   directeur_importation:  { gauche: '', droite: "LE DIRECTEUR DES IMPORTATIONS" },
-  directeur_logistique:   { gauche: '', droite: "LE DIRECTEUR LOGISTIQUE" },
-  responsable_depots:     { gauche: '', droite: "LE RESPONSABLE DES DÉPÔTS" },
-  responsable_transport:  { gauche: '', droite: "LE RESPONSABLE TRANSPORT" },
-  operateur_logistique:   { gauche: '', droite: "L'OPÉRATEUR LOGISTIQUE" },
-  personnel_admin:       { gauche: '', droite: "LE PERSONNEL ADMINISTRATIF" },
   agent_importation:     { gauche: '', droite: "L'AGENT D'IMPORTATION" },
-  juriste:               { gauche: '', droite: "LE JURISTE" },
-  comptable:             { gauche: '', droite: "LE COMPTABLE" },
-  agent_logistique:      { gauche: '', droite: "L'AGENT LOGISTIQUE" },
 };
 
 // Helper: Convert Image URL to Base64 with fallback and better error handling

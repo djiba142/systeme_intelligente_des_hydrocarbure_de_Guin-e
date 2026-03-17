@@ -31,11 +31,11 @@ interface ImportProduit {
 }
 
 interface NewProduit {
-  nom: FormDataEntryValue | null;
-  type: FormDataEntryValue | null;
-  densite: FormDataEntryValue | null;
+  nom: string;
+  type: string;
+  densite: number;
   statut: string;
-  description: FormDataEntryValue | null;
+  description: string | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,6 +47,7 @@ function cn(...classes: (string | boolean | undefined | null)[]) {
 
 export default function ImportProduitsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { role } = useAuth();
@@ -87,6 +88,7 @@ export default function ImportProduitsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['import-produits'] });
       toast({ title: "Succès", description: "Produit pétrolier ajouté au catalogue." });
+      setIsDialogOpen(false);
     },
     onError: () => {
         toast({ variant: "destructive", title: "Erreur", description: "Impossible d'enregistrer le produit (vérifiez la base de données)." });
@@ -115,7 +117,7 @@ export default function ImportProduitsPage() {
             />
           </div>
           {(role === 'directeur_importation' || role === 'super_admin' || role === 'agent_importation') && (
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="h-11 px-6 rounded-xl gap-2 shadow-lg shadow-primary/20 bg-slate-900 hover:bg-slate-800 text-white font-bold">
                   <Plus className="h-4 w-4" /> Nouveau Produit
@@ -129,12 +131,18 @@ export default function ImportProduitsPage() {
                 <form className="space-y-4 pt-4" onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
+                  const densiteVal = parseFloat(formData.get('densite') as string);
+                  if (isNaN(densiteVal)) {
+                    toast({ variant: "destructive", title: "Erreur", description: "La densité doit être un nombre valide." });
+                    return;
+                  }
+                  
                   createMutation.mutate({
-                    nom: formData.get('nom'),
-                    type: formData.get('type'),
-                    densite: formData.get('densite'),
+                    nom: formData.get('nom') as string,
+                    type: formData.get('type') as string,
+                    densite: densiteVal,
                     statut: 'actif',
-                    description: formData.get('description'),
+                    description: formData.get('description') as string,
                   });
                 }}>
                   <div className="space-y-2">

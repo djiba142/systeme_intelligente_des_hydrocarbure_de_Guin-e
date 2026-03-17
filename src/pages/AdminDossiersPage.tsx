@@ -111,8 +111,7 @@ export default function AdminDossiersPage() {
   const handleUpdateStatus = async (id: string, newStatus: DossierStatus) => {
     try {
       const isDSA = role?.includes('aval') || role?.includes('dsa') || role?.includes('distribution');
-      const isDA = role?.includes('administratif');
-      const isDJ = role?.includes('juridique');
+      const isAdminEtat = role === 'admin_etat' || role === 'super_admin';
       const isDG = ['directeur_general', 'directeur_adjoint', 'super_admin'].includes(role || '');
 
       const updateData: any = { 
@@ -125,13 +124,9 @@ export default function AdminDossiersPage() {
         updateData.valide_par_dsa = user?.email;
         updateData.date_validation_dsa = new Date().toISOString();
       } 
-      if (isDA && selectedDossier?.statut === 'analyse_technique') {
-        updateData.valide_par_da = user?.email;
-        updateData.date_validation_da = new Date().toISOString();
-      }
-      if (isDJ && selectedDossier?.statut === 'analyse_administrative') {
-        updateData.valide_par_djc = user?.email;
-        updateData.date_validation_djc = new Date().toISOString();
+      if (isAdminEtat && selectedDossier?.statut === 'analyse_administrative') {
+        // Admin Etat is now responsible for the administrative stage previously held by DA
+        updateData.updated_at = new Date().toISOString();
       }
       if (isDG && selectedDossier?.statut === 'analyse_juridique') {
         updateData.valide_par_dg = user?.email;
@@ -170,7 +165,25 @@ export default function AdminDossiersPage() {
       subtitle="Suivi complet des agréments, licences et dossiers SONAP"
     >
       <div className="space-y-6">
-        {/* Banner Summary */}
+        {/* Main Header & Stats */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">SURVEILLANCE WORKFLOW</h1>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] opacity-60">Système SIHG • Chaine de Décision SONAP</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {(role?.includes('administratif') || role?.includes('aval') || role?.includes('dsa') || role === 'super_admin') && (
+              <Button 
+                className="bg-slate-900 text-white rounded-[1.5rem] h-16 px-10 font-black uppercase text-[10px] tracking-widest shadow-2xl shadow-slate-900/30 group transition-all active:scale-95"
+                onClick={() => setIsNewDialogOpen(true)}
+              >
+                <Plus className="mr-3 h-5 w-5 group-hover:rotate-90 transition-transform" /> ENREGISTRER UN DOSSIER PHYSIQUE
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Dashboard KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="rounded-2xl border-none shadow-sm bg-blue-600 text-white overflow-hidden relative">
             <div className="absolute right-0 top-0 h-full w-24 bg-white/10 -skew-x-12 translate-x-12" />
@@ -199,38 +212,20 @@ export default function AdminDossiersPage() {
           </Card>
         </div>
 
-        {/* Toolbar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm">
+          <div className="relative flex-1 max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
             <Input 
-              placeholder="Référence, entreprise ou station..." 
-              className="pl-10 h-11 rounded-xl bg-white border-slate-200"
+              placeholder="Rechercher par référence, société ou numéro de dossier..." 
+              className="pl-12 h-14 rounded-2xl bg-slate-50/50 border-none font-bold text-slate-700"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="h-11 rounded-xl bg-white gap-2 font-bold border-slate-200" onClick={fetchDossiers}>
-              <Activity className={cn("h-4 w-4", loading && "animate-spin")} /> Rafraîchir
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" className="h-14 w-14 rounded-2xl bg-slate-50 border-none flex items-center justify-center p-0" onClick={fetchDossiers}>
+              <Activity className={cn("h-6 w-6 text-slate-400", loading && "animate-spin")} />
             </Button>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-              <div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tighter">GESTION DES DOSSIERS</h1>
-                <p className="text-slate-500 font-medium">Système SN-SONAP • Traçabilité de la chaine de décision</p>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* Permissions élargies pour la création (Admin + DSA pour les ouvertures stations) */}
-                {(role?.includes('administratif') || role?.includes('aval') || role?.includes('dsa') || role === 'super_admin') && (
-                  <Button 
-                    className="bg-slate-900 text-white rounded-2xl h-14 px-8 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-900/20 group transition-all active:scale-95"
-                    onClick={() => setIsNewDialogOpen(true)}
-                  >
-                    <Plus className="mr-2 h-4 w-4 group-hover:rotate-90 transition-transform" /> Enregistrer un Dossier
-                  </Button>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -326,7 +321,7 @@ export default function AdminDossiersPage() {
                                   </DropdownMenuItem>
                                 )}
 
-                                {d.statut === 'analyse_juridique' && ['directeur_juridique', 'juriste', 'super_admin'].includes(role || '') && (
+                                {d.statut === 'analyse_juridique' && ['admin_etat', 'directeur_administratif', 'directeur_general', 'super_admin'].includes(role || '') && (
                                   <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg font-bold text-purple-600" onClick={() => handleUpdateStatus(d.id, 'approuve')}>
                                     <PenTool className="h-4 w-4" /> Soumettre pour Branche DG (Signature)
                                   </DropdownMenuItem>
@@ -550,8 +545,8 @@ export default function AdminDossiersPage() {
                       </Button>
                     )}
 
-                    {/* Étape JURIDIQUE (DJ) */}
-                    {selectedDossier.statut === 'analyse_administrative' && role?.includes('juridique') && (
+                    {/* Étape JURIDIQUE (DJ) → Now handled by Admin Central */}
+                    {selectedDossier.statut === 'analyse_administrative' && (role === 'admin_etat' || role === 'directeur_administratif' || role === 'super_admin') && (
                       <Button 
                         className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl h-14 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-purple-600/20"
                         onClick={() => handleUpdateStatus(selectedDossier.id, 'analyse_juridique')}

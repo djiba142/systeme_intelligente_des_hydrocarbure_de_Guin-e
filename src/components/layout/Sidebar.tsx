@@ -70,7 +70,7 @@ const navCategories: NavCategory[] = [
       { name: 'Rapports Stratégiques', href: '/rapports', icon: FileText, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'super_admin'] },
       { name: 'Statistiques Nationales', href: '/statistiques', icon: BarChart3, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'super_admin'] },
       { name: 'Alertes Énergétiques', href: '/alertes', icon: AlertTriangle, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'super_admin'] },
-      { name: 'Carte Nationale', href: '/carte', icon: Map, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'super_admin', 'inspecteur', 'analyste'] },
+      { name: 'Carte Nationale', href: '/carte', icon: Map, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'super_admin', 'inspecteur'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════
@@ -104,21 +104,7 @@ const navCategories: NavCategory[] = [
       { name: 'Registre Inspections', href: '/inspections', icon: ClipboardList, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'inspecteur'] },
     ]
   },
-  // ═══════════════════════════════════════════════════════════
-  // CELLULE D'ANALYSE STRATÉGIQUE (CAS) & PLANIFICATION
-  // ═══════════════════════════════════════════════════════════
-  {
-    title: "Intelligence Énergétique",
-    items: [
-      { name: 'Dashboard Analytique', href: '/dashboard/analyste', icon: LayoutDashboard, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat', 'secretaire_general'] },
-      { name: 'Statistiques Nationales', href: '/statistiques', icon: BarChart3, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat', 'secretaire_general'] },
-      { name: 'Analyse Entreprises', href: '/entreprises', icon: Building2, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat', 'secretaire_general'] },
-      { name: 'Analyse Distribution', href: '/stations', icon: Fuel, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat', 'secretaire_general'] },
-      { name: 'Prévisions Énergétiques', href: '/previsions', icon: Activity, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat', 'secretaire_general'] },
-      { name: 'Analyse Risques', href: '/alertes', icon: AlertTriangle, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat', 'secretaire_general'] },
-      { name: 'Rapports Stratégiques', href: '/rapports', icon: FileText, roles: ['analyste', 'directeur_general', 'directeur_adjoint', 'super_admin', 'admin_etat', 'secretaire_general'] },
-    ]
-  },
+
   // ═══════════════════════════════════════════════════════════
   // DIRECTION IMPORTATION & APPROVISIONNEMENT
   // ═══════════════════════════════════════════════════════════
@@ -132,57 +118,7 @@ const navCategories: NavCategory[] = [
       { name: 'Dossiers & Cargaisons', href: '/importations/dossiers', icon: FolderOpen, roles: ['directeur_importation', 'agent_importation', 'super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat'] },
     ]
   },
-  // ═══════════════════════════════════════════════════════════
-  // DIRECTION ADMINISTRATIVE
-  // ═══════════════════════════════════════════════════════════
-  {
-    title: "Direction Administrative",
-    items: [
-      { name: 'Dashboard Admin', href: '/dashboard/administratif', icon: LayoutDashboard, roles: ['directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'gestionnaire_documentaire', 'personnel_admin', 'super_admin'] },
-      { name: 'Entreprises Pétrolières', href: '/entreprises', icon: Building2, roles: ['directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'super_admin'] },
-      { name: 'Dossiers & Agréments', href: '/administratif/dossiers', icon: FolderOpen, roles: ['directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'super_admin'] },
-      { name: 'Gestion Documentaire', href: '/juridique/archives', icon: FileText, roles: ['directeur_administratif', 'gestionnaire_documentaire', 'super_admin'] },
-    ]
-  },
-  // ═══════════════════════════════════════════════════════════
-  // DIRECTION LOGISTIQUE
-  // ═══════════════════════════════════════════════════════════
-  {
-    title: "Direction Logistique",
-    items: [
-      { name: 'Dashboard Logistique', href: '/dashboard/logistique', icon: LayoutDashboard, roles: ['directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique', 'super_admin'] },
-      { name: 'Gestion des Dépôts', href: '/logistique/depots', icon: Warehouse, roles: ['directeur_logistique', 'responsable_depots', 'super_admin'] },
-      { name: 'Transport & Flotte', href: '/logistique/transport', icon: Truck, roles: ['directeur_logistique', 'responsable_transport', 'super_admin'] },
-      { name: 'Réceptions Flux', href: '/logistique/receptions', icon: Package, roles: ['directeur_logistique', 'agent_logistique', 'operateur_logistique', 'super_admin'] },
-    ]
-  },
-  // ═══════════════════════════════════════════════════════════
-  // DIRECTION ADMINISTRATIVE & FINANCIÈRE (DAF)
-  // ═══════════════════════════════════════════════════════════
-  {
-    title: "Direction Financière (DAF)",
-    items: [
-      { name: 'Dashboard Financier', href: '/dashboard/finance', icon: Wallet, roles: ['directeur_financier', 'controleur_financier', 'comptable', 'super_admin', 'directeur_general', 'directeur_adjoint', 'secretaire_general'] },
-      { name: 'Gestion Budgétaire', href: '/finance/budget', icon: PiggyBank, roles: ['directeur_financier', 'controleur_financier', 'super_admin', 'directeur_general', 'directeur_adjoint'] },
-      { name: 'Fournisseurs', href: '/finance/fournisseurs', icon: Contact2, roles: ['directeur_financier', 'comptable', 'super_admin', 'directeur_general', 'directeur_adjoint'] },
-      { name: 'Facturation', href: '/finance/factures', icon: Receipt, roles: ['directeur_financier', 'controleur_financier', 'comptable', 'super_admin'] },
-      { name: 'Paiements & Flux', href: '/finance/paiements', icon: Coins, roles: ['directeur_financier', 'comptable', 'super_admin', 'directeur_general', 'directeur_adjoint'] },
-    ]
-  },
-  // ═══════════════════════════════════════════════════════════
-  // PÔLE JURIDIQUE & CONFORMITÉ
-  // ═══════════════════════════════════════════════════════════
-  {
-    title: "Pôle Juridique & Conformité",
-    items: [
-      { name: 'Dashboard DJ/C', href: '/dashboard/juridique', icon: Scale, roles: ['directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique', 'super_admin', 'directeur_general', 'directeur_adjoint'] },
-      { name: 'Dossiers & Workflow', href: '/administratif/dossiers', icon: FolderOpen, roles: ['directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique', 'super_admin', 'secretaire_general', 'directeur_general', 'directeur_adjoint'] },
-      { name: 'Gestion des Contrats', href: '/juridique/contrats', icon: FileText, roles: ['directeur_juridique', 'juriste', 'super_admin'] },
-      { name: 'Conformité & Contrôle', href: '/juridique/conformite', icon: ShieldCheck, roles: ['directeur_juridique', 'charge_conformite', 'super_admin'] },
-      { name: 'Contentieux & Litiges', href: '/juridique/litiges', icon: Gavel, roles: ['directeur_juridique', 'juriste', 'super_admin'] },
-      { name: 'Archives & Documents', href: '/juridique/archives', icon: HistoryIcon, roles: ['directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique', 'super_admin'] },
-    ]
-  },
+
   // ═══════════════════════════════════════════════════════════
   // MISSIONS TERRAIN (Entreprises Pétrolières)
   // ═══════════════════════════════════════════════════════════
@@ -206,9 +142,9 @@ const navCategories: NavCategory[] = [
     items: [
       { name: 'Entreprises', href: '/entreprises', icon: Building2, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'inspecteur', 'directeur_importation'] },
       { name: 'Stations-Service', href: '/stations', icon: Fuel, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_bureau_aval', 'agent_supervision_aval', 'inspecteur', 'responsable_entreprise', 'responsable_stations', 'operateur_entreprise'] },
-      { name: 'Importations', href: '/importations', icon: Ship, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'analyste', 'directeur_importation', 'agent_importation'] },
-      { name: 'Commandes Flux', href: '/admin/commandes', icon: Truck, roles: ['admin_etat', 'super_admin', 'directeur_general', 'directeur_adjoint', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'responsable_entreprise', 'gestionnaire_livraisons', 'operateur_entreprise', 'inspecteur', 'analyste'] },
-      { name: 'Alertes & Risques', href: '/alertes', icon: AlertTriangle, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_bureau_aval', 'agent_supervision_aval', 'inspecteur', 'responsable_entreprise', 'responsable_stations', 'gestionnaire_livraisons', 'operateur_entreprise', 'charge_conformite'] },
+      { name: 'Importations', href: '/importations', icon: Ship, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'directeur_importation', 'agent_importation'] },
+      { name: 'Commandes Flux', href: '/admin/commandes', icon: Truck, roles: ['admin_etat', 'super_admin', 'directeur_general', 'directeur_adjoint', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'responsable_entreprise', 'gestionnaire_livraisons', 'operateur_entreprise', 'inspecteur'] },
+      { name: 'Alertes & Risques', href: '/alertes', icon: AlertTriangle, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_bureau_aval', 'agent_supervision_aval', 'inspecteur', 'responsable_entreprise', 'responsable_stations', 'gestionnaire_livraisons', 'operateur_entreprise'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════
@@ -217,7 +153,7 @@ const navCategories: NavCategory[] = [
   {
     title: "Pilotage & Données",
     items: [
-      { name: 'Rapports & Stats', href: '/rapports', icon: FileText, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'operateur_entreprise', 'gestionnaire_livraisons', 'responsable_stations', 'inspecteur', 'responsable_entreprise', 'service_it', 'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique', 'directeur_financier', 'controleur_financier', 'comptable', 'directeur_importation', 'agent_importation', 'directeur_administratif', 'directeur_logistique'] },
+      { name: 'Rapports & Stats', href: '/rapports', icon: FileText, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'operateur_entreprise', 'gestionnaire_livraisons', 'responsable_stations', 'inspecteur', 'responsable_entreprise', 'service_it', 'directeur_importation', 'agent_importation'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════
@@ -227,7 +163,7 @@ const navCategories: NavCategory[] = [
     title: "Administration SIHG (DSI)",
     items: [
       { name: 'Console DSI', href: '/dashboard/service-it', icon: Terminal, roles: ['service_it', 'super_admin'] },
-      { name: 'Gestion Utilisateurs', href: '/utilisateurs', icon: Users, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'service_it', 'responsable_entreprise', 'directeur_financier', 'directeur_juridique', 'directeur_importation', 'directeur_administratif', 'directeur_logistique'] },
+      { name: 'Gestion Utilisateurs', href: '/utilisateurs', icon: Users, roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'service_it', 'responsable_entreprise', 'directeur_importation'] },
       { name: 'Journaux d\'Audit', href: '/audit', icon: Shield, roles: ['super_admin', 'service_it', 'directeur_general', 'directeur_adjoint'] },
       { name: 'Sécurité Informatique', href: '/audit', icon: ShieldCheck, roles: ['super_admin', 'service_it'] },
       { name: 'Paramètres Système', href: '/parametres', icon: Settings, roles: ['super_admin'] },

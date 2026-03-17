@@ -112,19 +112,20 @@ export default function DashboardDSA() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [resOrders, resAlerts, resRawStations, resDeliveries, resStockDossiers] = await Promise.all([
+            const [resOrders, resAlerts, resRawStations, resDeliveries, resEntreprisesPending, resStationsPending] = await Promise.all([
                 supabase.from('ordres_livraison').select('*, station:stations(nom, entreprise:entreprises(sigle))').in('statut', ['en_attente', 'approuve', 'en_cours']).order('created_at', { ascending: false }).limit(5),
                 supabase.from('alertes').select('*, station:stations(nom)').eq('resolu', false),
                 supabase.from('stations').select('*, entreprises:entreprise_id(nom, sigle)'),
                 supabase.from('livraisons').select('*', { count: 'exact', head: true }).eq('statut', 'en_route'),
-                (supabase as any).from('import_dossiers').select('*').eq('statut', 'receptionne')
+                supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('statut', 'attente_validation'),
+                supabase.from('stations').select('*', { count: 'exact', head: true }).eq('statut', 'attente_validation')
             ]);
 
             const ordersPendingCount = await supabase.from('ordres_livraison').select('*', { count: 'exact', head: true }).eq('statut', 'en_attente');
 
             setStats(prev => ({
                 ...prev,
-                pendingValidation: ordersPendingCount.count || 0,
+                pendingValidation: (resEntreprisesPending.count || 0) + (resStationsPending.count || 0),
                 stockAlerts: resAlerts.data?.length || 0,
                 activeDeliveries: resDeliveries.count || 12,
             }));
@@ -169,23 +170,7 @@ export default function DashboardDSA() {
         }
     }, []);
 
-    const handleTechnicalValidate = async (station: Station) => {
-        try {
-            const { error } = await supabase
-                .from('stations')
-                .update({ statut: 'attente_dla' }) // Next stage: Administrative (DLA)
-                .eq('id', station.id);
-            
-            if (error) throw error;
-            
-            await notifyStationStatusUpdate(station, 'attente_dla');
-            toast.success(`Le dossier de ${station.nom} a été validé techniquement.`);
-            fetchData();
-        } catch (error) {
-            console.error('Error validating dossier:', error);
-            toast.error("Erreur lors de la validation technique.");
-        }
-    };
+
 
     useEffect(() => {
         fetchData();
@@ -287,7 +272,7 @@ export default function DashboardDSA() {
                         </Button>
                     )}
                     <Button size="sm" variant="outline" className="gap-2 shadow-sm" asChild>
-                        <Link to="/administratif/dossiers">
+                        <Link to="/admin/dossiers">
                             <FolderOpen className="h-4 w-4 text-primary" />
                             Dossiers & Workflow
                         </Link>
@@ -458,38 +443,32 @@ export default function DashboardDSA() {
                     <Card className="border-none shadow-lg h-full bg-white dark:bg-slate-900">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <ClipboardCheck className="h-5 w-5 text-indigo-500" />
-                                Dossiers Techniques
+                                <Clock className="h-5 w-5 text-amber-500" />
+                                Créations en Attente
                             </CardTitle>
-                            <CardDescription>Validation technique (DSA)</CardDescription>
+                            <CardDescription>Validation par l'Admin Central</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {stations.filter(s => s.statut === 'attente_dsa').length === 0 ? (
-                                <div className="p-4 text-center text-slate-400 text-xs italic">Aucun dossier en attente (DSA)</div>
+                            {stations.filter(s => s.statut === 'attente_validation').length === 0 ? (
+                                <div className="p-4 text-center text-slate-400 text-xs italic">Aucune création en attente de validation</div>
                             ) : (
-                                stations.filter(s => s.statut === 'attente_dsa').slice(0, 3).map(s => (
-                                    <div key={s.id} className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100 space-y-3">
+                                stations.filter(s => s.statut === 'attente_validation').slice(0, 3).map(s => (
+                                    <div key={s.id} className="p-4 rounded-xl bg-amber-50/50 border border-amber-100 space-y-3">
                                         <div className="flex justify-between items-start">
-                                            <Badge className="bg-indigo-600 text-[8px]">TECH-PENDING</Badge>
+                                            <Badge className="bg-amber-600 text-[8px] uppercase tracking-tighter">Attente Admin</Badge>
                                             <span className="text-[10px] font-bold text-slate-400 italic">Code: {s.code}</span>
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-black text-slate-900">{s.nom}</h4>
-                                            <p className="text-[11px] text-slate-500">{s.region} / {s.ville}</p>
+                                            <p className="text-[11px] text-slate-500">{s.entrepriseSigle} / {s.region}</p>
                                         </div>
                                         <div className="flex gap-2">
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-slate-400">
-                                                <Info className="h-4 w-4" />
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-slate-400" asChild>
+                                                <Link to={`/stations/${s.id}`}><Info className="h-4 w-4" /></Link>
                                             </Button>
-                                            {role !== 'super_admin' && (
-                                                <Button 
-                                                    size="sm" 
-                                                    className="bg-emerald-600 hover:bg-[#00944D] text-white font-black uppercase text-[9px] tracking-widest px-4 h-8 rounded-lg"
-                                                    onClick={() => handleTechnicalValidate(s)}
-                                                >
-                                                    Valider Technical
-                                                </Button>
-                                            )}
+                                            <Badge variant="outline" className="border-amber-200 text-amber-700 bg-white text-[10px]">
+                                                En cours de validation
+                                            </Badge>
                                         </div>
                                     </div>
                                 ))

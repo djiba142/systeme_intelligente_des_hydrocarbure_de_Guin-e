@@ -41,12 +41,12 @@ interface SupplierRef { id: string; nom: string; }
 interface ProductRef { id: string; nom: string; }
 
 interface NewDossier {
-  numero_dossier: FormDataEntryValue | null;
-  fournisseur_id: FormDataEntryValue | null;
-  produit_id: FormDataEntryValue | null;
+  numero_dossier: string;
+  fournisseur_id: string;
+  produit_id: string;
   quantite_prevue: number;
-  port_depart: FormDataEntryValue | null;
-  date_arrivee_est: FormDataEntryValue | null;
+  port_depart: string | null;
+  date_arrivee_est: string;
   statut: string;
 }
 
@@ -56,14 +56,16 @@ interface StatusUpdate {
   updates?: Record<string, string | null>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = supabase as unknown as { from: (table: string) => any; auth?: { user?: { id: string } } };
+const db = supabase;
 
 export default function ImportDossiersPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { role: currentUserRole } = useAuth();
+  const { role: currentUserRole, user } = useAuth();
 
   const { data: dossiers, isLoading } = useQuery({
     queryKey: ['import-dossiers-workflow'],
@@ -101,12 +103,23 @@ export default function ImportDossiersPage() {
     mutationFn: async (newDossier: NewDossier) => {
       const { error } = await db
         .from('import_dossiers')
-        .insert(newDossier);
+        .insert({ 
+          ...newDossier, 
+          created_by: user?.id 
+        });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['import-dossiers-workflow'] });
       toast({ title: "Dossier créé", description: "Le dossier d'importation est maintenant en préparation." });
+      setIsDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        variant: "destructive", 
+        title: "Erreur", 
+        description: error.message || "Impossible de créer le dossier." 
+      });
     }
   });
 
@@ -124,6 +137,13 @@ export default function ImportDossiersPage() {
         title: "Statut mis à jour", 
         description: `Le dossier est passé au statut : ${variables.status.replace('_', ' ')}` 
       });
+    },
+    onError: (error: any) => {
+      toast({ 
+        variant: "destructive", 
+        title: "Erreur de mise à jour", 
+        description: error.message || "Impossible de changer le statut du dossier." 
+      });
     }
   });
 
@@ -132,15 +152,13 @@ export default function ImportDossiersPage() {
       case 'en_preparation': 
         return <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 uppercase text-[9px] font-black">1. Préparation</Badge>;
       case 'attente_juridique': 
-        return <Badge className="bg-amber-100 text-amber-700 border-amber-200 uppercase text-[9px] font-black animate-pulse">2. Vérification Jury</Badge>;
-      case 'attente_paiement': 
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-200 uppercase text-[9px] font-black">3. Paiement DAF</Badge>;
+        return <Badge className="bg-amber-100 text-amber-700 border-amber-200 uppercase text-[9px] font-black animate-pulse">2. Vérification AC</Badge>;
       case 'en_transport': 
-        return <Badge className="bg-blue-500 text-white border-none uppercase text-[9px] font-black">4. En Transport</Badge>;
+        return <Badge className="bg-blue-500 text-white border-none uppercase text-[9px] font-black">3. En Transport</Badge>;
       case 'arrive': 
-        return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 uppercase text-[9px] font-black">5. Arrivé Port</Badge>;
+        return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 uppercase text-[9px] font-black">4. Arrivé Port</Badge>;
       case 'receptionne': 
-        return <Badge className="bg-emerald-600 text-white border-none uppercase text-[9px] font-black">6. Réceptionné</Badge>;
+        return <Badge className="bg-emerald-600 text-white border-none uppercase text-[9px] font-black">5. Réceptionné</Badge>;
       case 'rejete': 
         return <Badge className="bg-red-100 text-red-700 border-red-200 uppercase text-[9px] font-black">Rejeté</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
@@ -152,40 +170,30 @@ export default function ImportDossiersPage() {
   const handleAction = (dossier: ImportDossier) => {
     const { id, statut } = dossier;
 
-    // 1. Logistique/Import submits to Legal
-    if (statut === 'en_preparation' && isRole(['directeur_importation', 'agent_importation', 'directeur_logistique', 'responsable_depots', 'operateur_logistique'])) {
+    // 1. Logistique/Import submits to Admin Central
+    if (statut === 'en_preparation' && isRole(['directeur_importation', 'agent_importation', 'directeur_aval', 'technicien_flux'])) {
       updateStatusMutation.mutate({ id, status: 'attente_juridique' });
       return;
     }
 
-    // 2. Juridique Approves
-    if (statut === 'attente_juridique' && isRole(['directeur_juridique', 'juriste', 'charge_conformite'])) {
-      updateStatusMutation.mutate({ 
-        id, 
-        status: 'attente_paiement', 
-        updates: { valide_juridique_par: db.auth?.user?.id || null, valide_juridique_at: new Date().toISOString() } 
-      });
-      return;
-    }
-
-    // 3. Finance Approves
-    if (statut === 'attente_paiement' && isRole(['directeur_financier', 'comptable', 'controleur_financier'])) {
+    // 2. Admin Central Approves (leads directly to transport)
+    if (statut === 'attente_juridique' && isRole(['admin_etat', 'directeur_general', 'directeur_adjoint', 'secretaire_general', 'super_admin'])) {
       updateStatusMutation.mutate({ 
         id, 
         status: 'en_transport', 
-        updates: { valide_finance_par: db.auth?.user?.id || null, valide_finance_at: new Date().toISOString() } 
+        updates: { valide_juridique_par: user?.id || null, valide_juridique_at: new Date().toISOString() } 
       });
       return;
     }
 
     // 4. Logistique confirms arrival
-    if (statut === 'en_transport' && isRole(['directeur_logistique', 'responsable_depots', 'operateur_logistique'])) {
+    if (statut === 'en_transport' && isRole(['directeur_aval', 'technicien_flux', 'super_admin'])) {
       updateStatusMutation.mutate({ id, status: 'arrive' });
       return;
     }
 
-    // 5. Finalize reception (integration in depot stocks handled by database trigger)
-    if (statut === 'arrive' && isRole(['directeur_logistique', 'responsable_depots', 'operateur_logistique'])) {
+    // 5. Finalize reception
+    if (statut === 'arrive' && isRole(['directeur_aval', 'technicien_flux', 'super_admin'])) {
       updateStatusMutation.mutate({ id, status: 'receptionne' });
       return;
     }
@@ -221,10 +229,10 @@ export default function ImportDossiersPage() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Wallet className="h-5 w-5" /></div>
+                <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600"><CheckCircle2 className="h-5 w-5" /></div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attente Paiement</p>
-                  <h4 className="text-xl font-black">{dossiers?.filter((d: ImportDossier) => d.statut === 'attente_paiement').length || 0}</h4>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dossiers Clôturés</p>
+                  <h4 className="text-xl font-black">{dossiers?.filter((d: ImportDossier) => d.statut === 'receptionne').length || 0}</h4>
                 </div>
               </div>
             </CardContent>
@@ -268,9 +276,9 @@ export default function ImportDossiersPage() {
             <Button variant="ghost" className="h-12 w-12 rounded-2xl bg-white border border-slate-100"><Filter size={18} /></Button>
           </div>
 
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              {isRole(['directeur_importation', 'agent_importation', 'directeur_logistique', 'responsable_depots']) && (
+              {isRole(['directeur_importation', 'agent_importation', 'directeur_aval', 'super_admin']) && (
                 <Button className="h-12 px-8 rounded-2xl gap-3 shadow-xl shadow-primary/20 bg-primary font-black uppercase text-[10px] tracking-widest">
                   <Plus className="h-4 w-4" /> Initialiser un Dossier
                 </Button>
@@ -284,13 +292,25 @@ export default function ImportDossiersPage() {
               <form className="grid grid-cols-2 gap-6" onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                
+                if (!selectedSupplier || !selectedProduct) {
+                  toast({ variant: "destructive", title: "Champs manquants", description: "Veuillez sélectionner un fournisseur et un produit." });
+                  return;
+                }
+
+                const quantite = Number(formData.get('quantite'));
+                if (isNaN(quantite) || quantite <= 0) {
+                  toast({ variant: "destructive", title: "Quantité invalide", description: "Veuillez saisir une quantité positive." });
+                  return;
+                }
+
                 createMutation.mutate({
-                  numero_dossier: formData.get('numero'),
-                  fournisseur_id: formData.get('fournisseur'),
-                  produit_id: formData.get('produit'),
-                  quantite_prevue: Number(formData.get('quantite')),
-                  port_depart: formData.get('port_depart'),
-                  date_arrivee_est: formData.get('date_prevue'),
+                  numero_dossier: formData.get('numero') as string,
+                  fournisseur_id: selectedSupplier,
+                  produit_id: selectedProduct,
+                  quantite_prevue: quantite,
+                  port_depart: formData.get('port_depart') as string,
+                  date_arrivee_est: formData.get('date_prevue') as string,
                   statut: 'en_preparation'
                 });
               }}>
@@ -300,11 +320,12 @@ export default function ImportDossiersPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase font-black text-slate-400 ml-1">Trader International</Label>
-                  <Select name="fournisseur" required>
+                  <Select onValueChange={setSelectedSupplier}>
                     <SelectTrigger className="h-12 rounded-xl border-slate-200">
                       <SelectValue placeholder="Sélectionner le fournisseur" />
                     </SelectTrigger>
                     <SelectContent>
+                      {suppliers?.length === 0 && <div className="p-2 text-xs text-slate-500">Aucun fournisseur actif</div>}
                       {suppliers?.map((s: SupplierRef) => (
                         <SelectItem key={s.id} value={s.id}>{s.nom}</SelectItem>
                       ))}
@@ -313,11 +334,12 @@ export default function ImportDossiersPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase font-black text-slate-400 ml-1">Type de Produit</Label>
-                  <Select name="produit" required>
+                  <Select onValueChange={setSelectedProduct}>
                     <SelectTrigger className="h-12 rounded-xl border-slate-200">
                       <SelectValue placeholder="Produit importé" />
                     </SelectTrigger>
                     <SelectContent>
+                      {products?.length === 0 && <div className="p-2 text-xs text-slate-500">Aucun produit configuré</div>}
                       {products?.map((p: ProductRef) => (
                         <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>
                       ))}
@@ -376,23 +398,19 @@ export default function ImportDossiersPage() {
                 let actionBtnVariant: "outline" | "default" | "secondary" | "destructive" | "ghost" = "ghost";
                 let showAction = true;
 
-                if (d.statut === 'en_preparation' && isRole(['directeur_importation', 'agent_importation', 'directeur_logistique', 'responsable_depots'])) {
+                if (d.statut === 'en_preparation' && isRole(['directeur_importation', 'agent_importation', 'directeur_aval'])) {
                   actionBtnLabel = "Soumettre au Juridique";
                   actionBtnIcon = <ShieldCheck className="h-4 w-4" />;
                   actionBtnVariant = "outline";
-                } else if (d.statut === 'attente_juridique' && isRole(['directeur_juridique', 'juriste', 'charge_conformite'])) {
+                } else if (d.statut === 'attente_juridique' && isRole(['admin_etat', 'directeur_administratif', 'directeur_general', 'directeur_adjoint'])) {
                   actionBtnLabel = "Valider Contrat";
                   actionBtnIcon = <CheckCircle2 className="h-4 w-4" />;
                   actionBtnVariant = "default";
-                } else if (d.statut === 'attente_paiement' && isRole(['directeur_financier', 'comptable', 'controleur_financier'])) {
-                  actionBtnLabel = "Valider Paiement";
-                  actionBtnIcon = <Wallet className="h-4 w-4" />;
-                  actionBtnVariant = "default";
-                } else if (d.statut === 'en_transport' && isRole(['directeur_logistique', 'responsable_depots', 'operateur_logistique'])) {
+                } else if (d.statut === 'en_transport' && isRole(['directeur_aval', 'technicien_flux'])) {
                   actionBtnLabel = "Confirmer Arrivée";
                   actionBtnIcon = <Anchor className="h-4 w-4" />;
                   actionBtnVariant = "secondary";
-                } else if (d.statut === 'arrive' && isRole(['directeur_logistique', 'responsable_depots', 'operateur_logistique'])) {
+                } else if (d.statut === 'arrive' && isRole(['directeur_aval', 'technicien_flux'])) {
                   actionBtnLabel = "Certifier Réception";
                   actionBtnIcon = <CheckCircle2 className="h-4 w-4" />;
                   actionBtnVariant = "default";
@@ -474,15 +492,15 @@ export default function ImportDossiersPage() {
 
         {/* Informational Workflow Help */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-80 mb-10">
-           <div className="p-6 rounded-[2rem] bg-indigo-50/50 border border-indigo-100">
+            <div className="p-6 rounded-[2rem] bg-indigo-50/50 border border-indigo-100">
               <div className="h-8 w-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4"><ShieldCheck size={18} /></div>
               <p className="text-[10px] font-black uppercase text-indigo-900 mb-2">Responsabilité Juridique</p>
               <p className="text-[11px] text-indigo-700 font-medium leading-relaxed">Vérification de la validité du contrat trader, de la licence d'importation et de la police d'assurance cargaison.</p>
            </div>
-           <div className="p-6 rounded-[2rem] bg-emerald-50/50 border border-emerald-100">
-              <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4"><Wallet size={18} /></div>
-              <p className="text-[10px] font-black uppercase text-emerald-900 mb-2">Responsabilité Financière</p>
-              <p className="text-[11px] text-emerald-700 font-medium leading-relaxed">Contrôle de la facture proforma, Swift de paiement et impact budgétaire sur la ligne d'approvisionnement.</p>
+           <div className="p-6 rounded-[2rem] bg-blue-50/50 border border-blue-100">
+              <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4"><Anchor size={18} /></div>
+              <p className="text-[10px] font-black uppercase text-blue-900 mb-2">Transit Maritime</p>
+              <p className="text-[11px] text-blue-700 font-medium leading-relaxed">Suivi en temps réel des navires en mer, ETA et coordination avec les autorités portuaires.</p>
            </div>
            <div className="p-6 rounded-[2rem] bg-blue-50/50 border border-blue-100">
               <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4"><Truck size={18} /></div>

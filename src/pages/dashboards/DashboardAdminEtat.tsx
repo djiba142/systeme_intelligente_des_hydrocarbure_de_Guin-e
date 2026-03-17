@@ -44,6 +44,7 @@ interface AdminStats {
     ordersPending: number;
     totalImportations: number;
     stationsPending: number;
+    entreprisesPending: number;
 }
 
 export default function DashboardAdminEtat() {
@@ -55,6 +56,7 @@ export default function DashboardAdminEtat() {
         ordersPending: 0,
         totalImportations: 0,
         stationsPending: 0,
+        entreprisesPending: 0,
     });
     const [stations, setStations] = useState<Station[]>([]);
     const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -91,8 +93,9 @@ export default function DashboardAdminEtat() {
                 supabase.from('fraud_alerts' as any).select('*, station:stations(nom)').eq('is_resolved', false).order('created_at', { ascending: false }).limit(3)
             ]);
 
-            const [resAllOrdersCount, resStationsPending] = await Promise.all([
+            const [resAllOrdersCount, resEntreprisesPending, resStationsPending] = await Promise.all([
                 supabase.from('ordres_livraison').select('*', { count: 'exact', head: true }).eq('statut', 'en_attente'),
+                supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('statut', 'attente_validation'),
                 supabase.from('stations').select('*', { count: 'exact', head: true }).eq('statut', 'attente_validation')
             ]);
 
@@ -102,6 +105,7 @@ export default function DashboardAdminEtat() {
                 ordersPending: resAllOrdersCount.count || 0,
                 totalImportations: resImportations.count || 0,
                 stationsPending: resStationsPending.count || 0,
+                entreprisesPending: resEntreprisesPending.count || 0,
             });
 
             setRecentOrders(resOrders.data || []);
@@ -444,6 +448,50 @@ export default function DashboardAdminEtat() {
                     </Card>
                 </div>
 
+                <div className="space-y-6">
+                    <Card className="border-none shadow-lg h-full">
+                    <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Clock className="h-5 w-5 text-amber-500" />
+                            Agréments en Attente
+                        </CardTitle>
+                        <CardDescription>Nouvelles entreprises et stations à valider</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {(stats.entreprisesPending + stats.stationsPending) === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center opacity-50">
+                                <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                                    <Building2 className="h-6 w-6 text-slate-300" />
+                                </div>
+                                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Réseau à jour : 0 attente</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                                            <span className="text-sm font-bold text-amber-900">Demandes DSA</span>
+                                        </div>
+                                        <Badge variant="outline" className="border-amber-200 text-amber-800 bg-white font-black">{stats.entreprisesPending + stats.stationsPending}</Badge>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button variant="outline" size="sm" className="h-9 text-[10px] uppercase font-black bg-white" asChild>
+                                            <Link to="/entreprises?statut=attente_validation">Entreprises</Link>
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="h-9 text-[10px] uppercase font-black bg-white" asChild>
+                                            <Link to="/stations?activeTab=pending">Stations</Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-slate-400 italic text-center px-4">
+                                    Les nouvelles entités créées par la Direction des Services Aval (DSA) nécessitent une vérification de conformité avant activation.
+                                </p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* File d'attente de Validation */}
                 <Card className="lg:col-span-1 border-none shadow-lg h-full">
                     <CardHeader>
@@ -503,6 +551,7 @@ export default function DashboardAdminEtat() {
                         )}
                     </CardContent>
                 </Card>
+            </div>
             </div>
 
             {/* Raccourcis Administratifs */}

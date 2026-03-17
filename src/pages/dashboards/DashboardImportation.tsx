@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Ship, Anchor, FolderOpen, TrendingUp, Clock, AlertCircle, 
@@ -21,6 +21,7 @@ export default function DashboardImportation() {
   const { role } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: stats } = useQuery({
     queryKey: ['import-stats'],
     queryFn: async () => {
@@ -38,9 +39,16 @@ export default function DashboardImportation() {
   const handleTransmitToLegal = async (dossierId: string) => {
     try {
       toast({ title: "Transmission Juridique", description: "Dossier en cours d'envoi pour examen conformité..." });
-      // In a real scenario, we would update the DB
-      // await supabase.from('import_dossiers').update({ statut: 'validation_juridique' }).eq('id', dossierId);
+      
+      const { error } = await (supabase as any)
+        .from('import_dossiers')
+        .update({ statut: 'attente_juridique' })
+        .eq('id', dossierId);
+
+      if (error) throw error;
+
       toast({ title: "Dossier Transmis", description: "La Direction Juridique a été notifiée." });
+      queryClient.invalidateQueries({ queryKey: ['import-stats'] });
     } catch (error) {
        toast({ variant: "destructive", title: "Erreur", description: "Échec de la transmission." });
     }
@@ -105,10 +113,10 @@ export default function DashboardImportation() {
                     name={d.numero_dossier || `Dossier #${d.id.slice(0,8)}`} 
                     vessel={d.navire_nom || "Navire en attente"} 
                     product={d.carburant || "Produit mixte"} 
-                    progress={d.statut === 'en_transit' ? 65 : d.statut === 'receptionne' ? 100 : 10} 
+                    progress={d.statut === 'en_transport' ? 65 : d.statut === 'arrive' ? 90 : d.statut === 'receptionne' ? 100 : 10} 
                     status={d.statut}
-                    date={`ETA: ${d.date_arrivee ? format(new Date(d.date_arrivee), 'dd MMM') : 'À définir'}`}
-                    showTransmit={d.statut === 'brouillon' && role === 'agent_importation'}
+                    date={`ETA: ${d.date_arrivee_est ? format(new Date(d.date_arrivee_est), 'dd MMM') : 'À définir'}`}
+                    showTransmit={d.statut === 'en_preparation' && (role === 'agent_importation' || role === 'directeur_importation' || role === 'super_admin')}
                     onTransmit={() => handleTransmitToLegal(d.id)}
                   />
                 ))
@@ -144,7 +152,7 @@ export default function DashboardImportation() {
                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-slate-500">Actions & Réglementation</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {role === 'agent_importation' || role === 'super_admin' ? (
+                {role === 'agent_importation' || role === 'directeur_importation' || role === 'super_admin' ? (
                   <div className="grid grid-cols-2 gap-3">
                     <QuickActionButton 
                       icon={Plus} 
@@ -171,7 +179,7 @@ export default function DashboardImportation() {
                       onClick={() => navigate('/importations/fournisseurs')}
                     />
                   </div>
-                ) : role === 'directeur_importation' ? (
+                ) : (role as any) === 'directeur_importation' ? (
                   <div className="space-y-3">
                     <div className="p-4 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Espace Validation</p>
@@ -264,12 +272,12 @@ function StatCard({ title, value, icon: Icon, trend, color }: any) {
 function ImportItem({ name, vessel, product, progress, status, date, showTransmit, onTransmit }: any) {
   const getStatusBadge = (s: string) => {
     const configs: any = {
-      brouillon: "bg-slate-500/20 text-slate-400",
-      validation_juridique: "bg-purple-500/20 text-purple-400",
-      attente_paiement: "bg-amber-500/20 text-amber-400",
-      en_transit: "bg-blue-500/20 text-blue-400",
-      arrive_conakry: "bg-emerald-500/20 text-emerald-400",
+      en_preparation: "bg-slate-500/20 text-slate-400",
+      attente_juridique: "bg-amber-500/20 text-amber-400",
+      en_transport: "bg-blue-500/20 text-blue-400",
+      arrive: "bg-emerald-500/20 text-emerald-400",
       receptionne: "bg-indigo-500/20 text-indigo-400",
+      rejete: "bg-red-500/20 text-red-400",
     };
     return <Badge className={cn("border-none", configs[s] || "bg-emerald-500/20 text-emerald-300")}>{s.replace('_', ' ').toUpperCase()}</Badge>;
   };
