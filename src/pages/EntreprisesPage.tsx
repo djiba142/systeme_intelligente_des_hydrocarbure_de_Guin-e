@@ -555,14 +555,18 @@ export default function EntreprisesPage() {
                 </div>
               </div>
 
-              {/* Agrément */}
+              {/* Agrément — Auto-généré */}
               <div className="space-y-2">
-                <Label>N° agrément</Label>
-                <Input
-                  value={formData.numeroAgrement}
-                  onChange={e => setFormData({ ...formData, numeroAgrement: e.target.value })}
-                  placeholder="Ex: AGR-2026-001"
-                />
+                <Label className="flex items-center gap-2">
+                  N° Agrément
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">
+                    ⚡ Auto
+                  </span>
+                </Label>
+                <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-dashed border-slate-300 bg-slate-50 text-slate-400">
+                  <span className="text-sm font-mono font-bold tracking-widest">ENT-{new Date().getFullYear()}-XXXX</span>
+                  <span className="text-[10px] text-slate-400 italic">· Généré automatiquement à la création</span>
+                </div>
               </div>
 
               {/* Contact */}

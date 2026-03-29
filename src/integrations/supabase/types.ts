@@ -459,6 +459,8 @@ export type Database = {
           id: string
           phone: string | null
           station_id: string | null
+          statut: 'inactif' | 'actif' | 'suspendu'
+          active_device_id: string | null
           updated_at: string
           user_id: string
         }
@@ -471,6 +473,8 @@ export type Database = {
           id?: string
           phone?: string | null
           station_id?: string | null
+          statut?: 'inactif' | 'actif' | 'suspendu'
+          active_device_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -483,6 +487,8 @@ export type Database = {
           id?: string
           phone?: string | null
           station_id?: string | null
+          statut?: 'inactif' | 'actif' | 'suspendu'
+          active_device_id?: string | null
           updated_at?: string
           user_id?: string
         }

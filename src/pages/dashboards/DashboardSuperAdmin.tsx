@@ -70,6 +70,7 @@ export default function DashboardSuperAdmin() {
   const [stations, setStations] = useState<Station[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [userRoles, setUserRoles] = useState<UserRoleRow[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   const CONSOMMATION_JOURNALIERE = {
@@ -112,6 +113,9 @@ export default function DashboardSuperAdmin() {
 
       setUsers((resUsers.data || []) as UserProfile[]);
       setUserRoles((resRoles.data || []) as UserRoleRow[]);
+      // Extract pending (inactif) accounts for activation panel
+      const pending = ((resUsers.data || []) as UserProfile[]).filter(u => (u as any).statut === 'inactif');
+      setPendingUsers(pending);
 
       const mappedStations: Station[] = (resData.data || []).map(s => ({
         id: s.id,
@@ -150,6 +154,19 @@ export default function DashboardSuperAdmin() {
       setLoading(false);
     }
   }, []);
+
+  const handleActivateUser = async (profileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ statut: 'actif' } as any)
+        .eq('id', profileId);
+      if (error) throw error;
+      await fetchData();
+    } catch (err) {
+      console.error('Erreur activation compte:', err);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -302,11 +319,11 @@ export default function DashboardSuperAdmin() {
         <StatCard title="Entreprises" value={stats.totalEntreprises} subtitle="distributeurs agréés" icon={Database} />
         <StatCard title="Stations" value={stats.totalStations} subtitle="points de distribution" icon={Server} />
         <StatCard
-          title="Incidents Ouverts"
-          value={stats.totalAlertes}
-          subtitle="alertes non résolues"
-          icon={AlertTriangle}
-          variant={stats.totalAlertes > 0 ? 'warning' : 'success'}
+          title="Comptes en attente"
+          value={pendingUsers.length}
+          subtitle="activation DSI requise"
+          icon={Lock}
+          variant={pendingUsers.length > 0 ? 'warning' : 'success'}
         />
       </div>
 
@@ -640,6 +657,60 @@ export default function DashboardSuperAdmin() {
               </CardFooter>
             </Card>
           </div>
+
+          {/* Comptes en attente d'activation */}
+          {pendingUsers.length > 0 && (
+            <Card className="border-2 border-orange-200 shadow-md bg-orange-50/30 overflow-hidden">
+              <CardHeader className="bg-orange-500 text-white py-3 px-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Comptes en attente d'activation DSI
+                  </CardTitle>
+                  <Badge className="bg-white/20 text-white border-white/30 font-black">
+                    {pendingUsers.length} compte{pendingUsers.length > 1 ? 's' : ''}
+                  </Badge>
+                </div>
+                <p className="text-orange-100 text-[11px] mt-1">Ces comptes ont été créés mais ne peuvent pas encore se connecter. Activez-les après vérification manuelle de l'identité.</p>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {pendingUsers.map(u => {
+                    const userRole = getUserRole(u.user_id);
+                    return (
+                      <div key={u.id} className="flex items-center justify-between px-6 py-4 hover:bg-orange-50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-orange-100 border-2 border-orange-200 flex items-center justify-center">
+                            <span className="text-orange-600 font-black text-sm">
+                              {(u.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{u.full_name}</p>
+                            <p className="text-[10px] text-muted-foreground">{u.email}</p>
+                            <p className="text-[10px] text-orange-500 font-bold uppercase tracking-wider">Créé le {new Date(u.created_at).toLocaleDateString('fr-FR')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge className={cn("text-[10px] font-bold uppercase", roleColors[userRole] || roleColors.default)} variant="outline">
+                            {ROLE_LABELS[userRole as AppRole] || userRole}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            className="h-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md"
+                            onClick={() => handleActivateUser(u.id)}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Activer le compte
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* TAB: Infrastructure */}

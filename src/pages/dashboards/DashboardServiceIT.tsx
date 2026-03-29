@@ -104,13 +104,14 @@ export default function DashboardServiceIT() {
     };
 
     const handleSuspendUser = async (profileId: string, currentStatut: string) => {
-        const newStatut = currentStatut === 'suspendu' ? 'actif' : 'suspendu';
+        // inactif -> actif (activation), suspendu -> actif (réactivation), actif -> suspendu
+        const newStatut = currentStatut === 'actif' ? 'suspendu' : 'actif';
         try {
             const { error } = await supabase.from('profiles').update({ statut: newStatut } as any).eq('id', profileId);
             if (error) throw error;
             fetchData();
         } catch (error) {
-            console.error('Error suspending user:', error);
+            console.error('Error updating user status:', error);
         }
     };
 
@@ -385,6 +386,11 @@ export default function DashboardServiceIT() {
                                                     )} variant="outline">
                                                         {roleLabels[getUserRole(u.user_id) as AppRole] || getUserRole(u.user_id)}
                                                     </Badge>
+                                                    {(u.statut === 'inactif' || (u as any).statut === 'inactif') && (
+                                                      <Badge className="ml-1 text-[9px] font-black uppercase bg-orange-100 text-orange-600 border-orange-200" variant="outline">
+                                                        En attente
+                                                      </Badge>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 px-6 text-right">
                                                     <div className="flex items-center justify-end gap-2">
@@ -400,11 +406,16 @@ export default function DashboardServiceIT() {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className={cn("h-8 gap-2 text-xs", u.statut === 'suspendu' ? "text-amber-600" : "text-slate-600")}
+                                                            className={cn(
+                                                              "h-8 gap-2 text-xs",
+                                                              u.statut === 'actif'
+                                                                ? "text-slate-600 hover:bg-slate-50"
+                                                                : "text-emerald-600 hover:bg-emerald-50 font-bold"
+                                                            )}
                                                             onClick={() => handleSuspendUser(u.id, u.statut || 'actif')}
                                                         >
                                                             <Lock className="h-3.5 w-3.5" />
-                                                            {u.statut === 'suspendu' ? 'Activer' : 'Suspendre'}
+                                                            {u.statut === 'actif' ? 'Suspendre' : 'Activer'}
                                                         </Button>
                                                         <Button
                                                             variant="ghost"

@@ -54,6 +54,7 @@ interface Profile {
   matricule?: string;
   first_login_done?: boolean;
   force_password_change?: boolean;
+  active_device_id?: string | null;
 }
 
 // Interface pour la création d'un utilisateur (super_admin ou service_it uniquement)
@@ -232,7 +233,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log(`fetchUserData: role result:`, roleResult.data ? roleResult.data.role : 'not found', roleResult.error?.message || '');
 
       if (profileResult.data) {
-        setProfile(profileResult.data as Profile);
+        const profileData = profileResult.data as Profile;
+        const localDeviceId = localStorage.getItem('sihg_device_id');
+        
+        // Vérification de collision de session
+        if (profileData.active_device_id && localDeviceId && profileData.active_device_id !== localDeviceId) {
+          console.warn('Session conflict detected on load. Signing out.');
+          await supabase.auth.signOut();
+          window.location.href = '/auth?error=session_conflict';
+          return;
+        }
+        
+        setProfile(profileData);
       } else {
         console.warn(`fetchUserData: No profile found for user ${userId}`);
       }
@@ -306,6 +318,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchUserData]);
 
+  // Surveillance temps réel de la session active
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase.channel(`session_monitor_${user.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        const localDeviceId = localStorage.getItem('sihg_device_id');
+        const newDeviceId = payload.new.active_device_id;
+        
+        if (newDeviceId && localDeviceId && newDeviceId !== localDeviceId) {
+          console.warn('Déconnexion forcée: nouvelle session détectée sur un autre appareil');
+          supabase.auth.signOut().then(() => {
+            window.location.href = '/auth?error=session_conflict';
+          });
+        }
+      }).subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   // --- INACTIVITY LOCK SYSTEM ---
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
@@ -347,9 +386,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.email, resetInactivityTimer]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      // Log failed login attempt (best effort, no authenticated user needed)
+      // Log failed login attempt
       try {
         await (supabase as any).from('audit_logs').insert([{
           user_email: email,
@@ -359,6 +398,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           details: { login_timestamp: new Date().toISOString() },
         }]);
       } catch { /* ignore */ }
+    } else if (data.user) {
+      // Generate and register new device session
+      const deviceId = crypto.randomUUID();
+      localStorage.setItem('sihg_device_id', deviceId);
+      
+      try {
+        await supabase
+          .from('profiles')
+          .update({ active_device_id: deviceId } as any)
+          .eq('user_id', data.user.id);
+      } catch (err) {
+        console.error('Failed to set active_device_id', err);
+      }
     }
     return { error };
   }, []);
@@ -522,6 +574,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // 3. Upsert the profile with all metadata
+      // NOTE: statut is set to 'inactif' by default — DSI must activate the account manually
       const { error: profileError } = await (supabase as any)
         .from('profiles')
         .upsert({
@@ -542,6 +595,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           adresse: adresse || null,
           matricule: matricule || null,
           force_password_change: forcePasswordChange || false,
+          statut: 'inactif', // Compte inactif jusqu'à activation manuelle par le Service IT
         }, { onConflict: 'user_id' });
 
       if (profileError) {

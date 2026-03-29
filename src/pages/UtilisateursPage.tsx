@@ -64,6 +64,7 @@ interface UserWithDetails {
   prefecture?: string;
   commune?: string;
   force_password_change?: boolean;
+  statut?: 'inactif' | 'actif' | 'suspendu';
 }
 
 const ORG_LABELS: Record<string, string> = {
@@ -163,6 +164,7 @@ export default function UtilisateursPage() {
         prefecture: p.prefecture || undefined,
         commune: p.commune || undefined,
         force_password_change: p.force_password_change || false,
+        statut: (p.statut as 'inactif' | 'actif' | 'suspendu') || 'actif',
       }));
 
       setUsers(usersWithDetails);
@@ -239,12 +241,60 @@ export default function UtilisateursPage() {
     }
   };
 
+  // Activation manuelle d'un compte inactif (DSI / Super Admin uniquement)
+  const canActivateAccounts = currentUserRole === 'super_admin' || currentUserRole === 'service_it';
+
+  const handleActivateUser = async (userId: string, name: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ statut: 'actif' } as any)
+        .eq('user_id', userId);
+      if (error) throw error;
+      toast({
+        title: 'Compte activé ✅',
+        description: `Le compte de ${name} est maintenant actif. L'utilisateur peut se connecter.`,
+      });
+      fetchUsers();
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur d\'activation',
+        description: err.message || 'Impossible d\'activer le compte',
+      });
+    }
+  };
+
+  const pendingCount = users.filter(u => u.statut === 'inactif').length;
+
   return (
     <DashboardLayout
       title="Gestion des Utilisateurs"
       subtitle="Contrôle des accès et hiérarchie de la plateforme"
     >
       <div className="space-y-8">
+
+        {/* Bandeau d'alerte - Comptes en attente d'activation */}
+        {canActivateAccounts && pendingCount > 0 && (
+          <div className="flex items-center justify-between gap-4 px-5 py-3.5 rounded-xl bg-orange-50 border-2 border-orange-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-orange-500 flex items-center justify-center shadow-md">
+                <UserCheck className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-orange-700">
+                  {pendingCount} compte{pendingCount > 1 ? 's' : ''} en attente d'activation
+                </p>
+                <p className="text-[11px] text-orange-500">
+                  Ces utilisateurs ne peuvent pas se connecter tant que leur compte n'est pas activé manuellement.
+                </p>
+              </div>
+            </div>
+            <Badge className="bg-orange-500 text-white border-orange-600 font-black text-sm px-3 py-1">
+              {pendingCount}
+            </Badge>
+          </div>
+        )}
         {/* Top Branding Section */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="md:col-span-1 bg-gradient-to-br from-slate-900 to-slate-800 border-none text-white relative overflow-hidden group">
@@ -495,12 +545,37 @@ export default function UtilisateursPage() {
                   
                   <div className="bg-slate-50 dark:bg-slate-800/20 px-6 py-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <div className="flex items-center gap-1.5">
-                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Compte vérifié</span>
+                      {user.statut === 'inactif' ? (
+                        <>
+                          <div className="h-1.5 w-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
+                          <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">En attente d'activation</span>
+                        </>
+                      ) : user.statut === 'suspendu' ? (
+                        <>
+                          <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                          <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Compte suspendu</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Compte actif</span>
+                        </>
+                      )}
                     </div>
-                    <span className="text-[10px] font-medium text-slate-400">
-                      ID: {user.user_id.slice(0, 8)}...
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-medium text-slate-400">
+                        ID: {user.user_id.slice(0, 8)}...
+                      </span>
+                      {user.statut === 'inactif' && canActivateAccounts && (
+                        <Button
+                          size="sm"
+                          className="h-6 text-[10px] uppercase font-bold tracking-wider px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => handleActivateUser(user.user_id, user.full_name)}
+                        >
+                          Activer
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
               );
