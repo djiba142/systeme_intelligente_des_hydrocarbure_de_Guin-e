@@ -60,7 +60,7 @@ const DashboardAdminEtat = lazy(() => import("@/pages/dashboards/DashboardAdminE
 const DashboardAdminCentral = lazy(() => import("@/pages/dashboards/DashboardAdminCentral"));
 const DashboardInspecteur = lazy(() => import("@/pages/dashboards/DashboardInspecteur"));
 const DashboardServiceIT = lazy(() => import("@/pages/dashboards/DashboardServiceIT"));
-const DashboardDSA = lazy(() => import("@/pages/dashboards/DashboardDSA"));
+import DashboardDSA from "@/pages/dashboards/DashboardDSA";
 const DashboardAdministratif = lazy(() => import("@/pages/dashboards/DashboardAdministratif"));
 const DashboardLogistique = lazy(() => import("@/pages/dashboards/DashboardLogistique"));
 
@@ -96,11 +96,10 @@ const LogistiqueReceptionsPage = lazy(() => import("@/pages/logistique/Logistiqu
 const LogistiqueTransportPage = lazy(() => import("@/pages/logistique/LogistiqueTransportPage"));
 const LogistiquePlanningPage = lazy(() => import("@/pages/logistique/LogistiquePlanningPage"));
 const AdminDossiersPage = lazy(() => import("@/pages/AdminDossiersPage"));
-const DashboardReception = lazy(() => import('@/pages/dashboards/DashboardReception'));
+import DashboardReception from "@/pages/dashboards/DashboardReception";
 
 // Dossiers Lifecycle Management
 const DossiersListPage = lazy(() => import("./pages/dossiers/DossiersListPage"));
-const CreateDossierPage = lazy(() => import("./pages/dossiers/CreateDossierPage"));
 const DossierDetailPage = lazy(() => import("./pages/dossiers/DossierDetailPage"));
 const StationReceptionPage = lazy(() => import("./pages/station/StationReceptionPage"));
 
@@ -213,7 +212,7 @@ const App = () => (
                     <RequireRole allowedRoles={['directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'chef_service_aval', 'agent_technique_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'super_admin', 'directeur_general', 'directeur_adjoint', 'secretariat_direction', 'service_it']} />
                   </ProtectedRoute>
                 }>
-                  <Route index element={<Suspense fallback={<PageLoader />}><DashboardDSA /></Suspense>} />
+                  <Route index element={<DashboardDSA />} />
                 </Route>
 
                 {/* Dashboard Admin Central / Régulation */}
@@ -308,7 +307,7 @@ const App = () => (
                     <RequireRole allowedRoles={['agent_reception', 'super_admin']} />
                   </ProtectedRoute>
                 }>
-                  <Route index element={<Suspense fallback={<PageLoader />}><DashboardReception /></Suspense>} />
+                  <Route index element={<DashboardReception />} />
                 </Route>
 
                 {/* --- WORKFLOW IMPORTATION (TRAÇABILITÉ) --- */}
@@ -451,14 +450,6 @@ const App = () => (
                     <Suspense fallback={<PageLoader />}><DossiersListPage /></Suspense>
                   </ProtectedRoute>
                 } />
-                
-                <Route path="/dossiers/nouveau" element={
-                  <ProtectedRoute>
-                    <RequireRole allowedRoles={['agent_reception', 'super_admin']} />
-                  </ProtectedRoute>
-                }>
-                  <Route index element={<Suspense fallback={<PageLoader />}><CreateDossierPage /></Suspense>} />
-                </Route>
 
                 <Route path="/dossiers/:id" element={
                   <ProtectedRoute>

@@ -158,7 +158,8 @@ export async function generateExcelReport({
     const sonapBase64 = await getLogoBase64(sonapLogoUrl);
 
     if (sihgBase64) {
-        const id = workbook.addImage({ base64: sihgBase64, extension: 'png' });
+        const base64Data = sihgBase64.includes(',') ? sihgBase64.split(',')[1] : sihgBase64;
+        const id = workbook.addImage({ base64: base64Data, extension: 'png' });
         sheet.addImage(id, {
             tl: { col: 1.1, row: 1.1 }, // Top-Left of Column B (col 1 index)
             ext: { width: 90, height: 90 }
@@ -166,7 +167,8 @@ export async function generateExcelReport({
     }
 
     if (sonapBase64) {
-        const id = workbook.addImage({ base64: sonapBase64, extension: 'jpeg' });
+        const base64Data = sonapBase64.includes(',') ? sonapBase64.split(',')[1] : sonapBase64;
+        const id = workbook.addImage({ base64: base64Data, extension: 'png' }); // canvas always outputs PNG
         sheet.addImage(id, {
             tl: { col: lastColIndex - 0.9, row: 1.1 }, // Right side margin
             ext: { width: 90, height: 90 }
@@ -177,7 +179,8 @@ export async function generateExcelReport({
     if (entrepriseLogo) {
         const entBase64 = await getLogoBase64(entrepriseLogo);
         if (entBase64) {
-            const id = workbook.addImage({ base64: entBase64, extension: 'png' });
+            const base64Data = entBase64.includes(',') ? entBase64.split(',')[1] : entBase64;
+            const id = workbook.addImage({ base64: base64Data, extension: 'png' });
             sheet.addImage(id, {
                 tl: { col: 2.1, row: 1.1 }, // Column C area
                 ext: { width: 80, height: 80 }
@@ -259,7 +262,8 @@ export async function generateExcelReport({
             margin: 1,
             color: { dark: '#1E293B', light: '#FFFFFF' }
         });
-        const id = workbook.addImage({ base64: qrB64, extension: 'png' });
+        const base64Data = qrB64.includes(',') ? qrB64.split(',')[1] : qrB64;
+        const id = workbook.addImage({ base64: base64Data, extension: 'png' });
         sheet.addImage(id, {
             tl: { col: 1.2, row: currentY - 0.2 },
             ext: { width: 95, height: 95 }

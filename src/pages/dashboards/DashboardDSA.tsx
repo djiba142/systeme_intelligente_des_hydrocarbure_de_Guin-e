@@ -232,7 +232,7 @@ export default function DashboardDSA() {
         let nextStatut: string = '';
         if (action === 'analyse') nextStatut = 'en_analyse_tech';
         else if (action === 'valider') nextStatut = 'valide_tech';
-        else if (action === 'rejeter') nextStatut = 'rejete';
+        else if (action === 'rejeter') nextStatut = 'rejete_tech';
 
         try {
             const { error } = await (supabase as any)
@@ -523,7 +523,7 @@ export default function DashboardDSA() {
                                                 <FileText className="h-5 w-5" />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-900 leading-none">{d.entreprises?.nom || 'Dossier Technique'}</h4>
+                                                <h4 className="font-bold text-slate-900 leading-none">{(d as any).entite_nom || d.entreprises?.nom || 'Dossier Technique'}</h4>
                                                 <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-widest">{d.numero_dossier}</p>
                                             </div>
                                         </div>

@@ -95,7 +95,7 @@ export default function DashboardAdministratif() {
         let nextStatut: string = '';
         if (action === 'analyse') nextStatut = 'en_analyse_admin';
         else if (action === 'valider') nextStatut = 'valide_admin';
-        else if (action === 'rejeter') nextStatut = 'rejete';
+        else if (action === 'rejeter') nextStatut = 'rejete_admin';
 
         try {
             const { error } = await (supabase as any)

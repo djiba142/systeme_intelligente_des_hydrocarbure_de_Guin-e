@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { format } from 'date-fns';
 import logoUrl from '@/assets/logo.png';
@@ -115,7 +115,7 @@ export const generateOfficialSONAPDocument = async (data: OfficialDocData) => {
   let lastY = 165;
   if (data.details) {
     const tableData = Object.entries(data.details).map(([key, value]) => [key, value]);
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 165,
       head: [['Paramètre de Contrôle', 'Valeur / État']],
       body: tableData,

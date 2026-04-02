@@ -70,7 +70,7 @@ const navCategories: NavCategory[] = [
   {
     title: "Régulation — État de Guinée",
     items: [
-      { name: 'Dashboard National', href: '/dashboard/admin-etat', icon: Shield, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'super_admin'] },
+      { name: 'Dashboard DG & État', href: '/dashboard/admin-etat', icon: Shield, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'super_admin'] },
       { name: 'Entreprises Pétrolières', href: '/entreprises', icon: Building2, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'super_admin'] },
       { name: 'Stations-Service', href: '/stations', icon: Fuel, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'super_admin'] },
       { name: 'Rapports Stratégiques', href: '/rapports', icon: FileText, roles: ['directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'super_admin'] },
@@ -126,7 +126,6 @@ const navCategories: NavCategory[] = [
     title: "Service Courrier & Accueil",
     items: [
       { name: 'Réception Dossiers', href: '/accueil/reception', icon: FileText, roles: ['agent_reception', 'super_admin'] },
-      { name: 'Nouveau Dossier', href: '/dossiers/nouveau', icon: FolderOpen, roles: ['agent_reception', 'super_admin'] },
     ]
   },
   // ═══════════════════════════════════════════════════════════

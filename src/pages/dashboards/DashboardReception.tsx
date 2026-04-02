@@ -139,10 +139,10 @@ export const DashboardReception = () => {
 
   const handleReceiveDossier = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!entiteNom || !typeDossier || !typeDemande) {
+    if (!entiteNom || !typeDossier || !typeDemande || !scannedFile) {
       toast({
-        title: "Champs manquants",
-        description: "Veuillez remplir tous les champs requis.",
+        title: "Dossier Incomplet",
+        description: "Veuillez remplir tous les champs et joindre le fichier PDF obligatoire.",
         variant: "destructive"
       });
       return;
@@ -151,10 +151,17 @@ export const DashboardReception = () => {
     setIsSubmitting(true);
     
     try {
-      // 1. Generate unique DOS-YEAR-XXX number
+      // 1. Generate unique DOS-YEAR-XXXX number
       const year = new Date().getFullYear();
-      const randomId = Math.floor(1000 + Math.random() * 9000);
-      const numeroDossier = `DOS-${year}-${randomId}`;
+      
+      // Récupérer le nombre de dossiers de l'année pour créer une séquence
+      const { count, error: countError } = await (supabase as any)
+        .from('dossiers_entreprise')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', `${year}-01-01T00:00:00.000Z`);
+        
+      const sequence = ((count || 0) + 1).toString().padStart(4, '0');
+      const numeroDossier = `DOS-${year}-${sequence}`;
 
       // 2. Identify target orientation for status
       let finalStatut: 'numerise' | 'en_analyse_tech' | 'en_analyse_admin' | 'en_analyse_jur' = 'numerise';
@@ -180,7 +187,7 @@ export const DashboardReception = () => {
         statut: finalStatut,
         description: `Demande de ${typeDemande} pour ${entiteNom}`,
         created_by: user?.id,
-        entreprise_id: '00000000-0000-0000-0000-000000000000', // Need dynamic lookup ideally
+        // entreprise_id is optional at this stage, so we avoid FK violation on dummy 0000... uuid
       }).select().single();
 
       if (dosError) throw dosError;
@@ -381,7 +388,7 @@ export const DashboardReception = () => {
                 </div>
 
                 <div className="flex justify-end pt-6">
-                  <Button type="submit" disabled={isSubmitting || !typeDossier} className="bg-slate-900 hover:bg-indigo-600 text-white gap-2 h-14 px-10 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-indigo-500/20 transition-all">
+                  <Button type="submit" disabled={isSubmitting || !typeDossier || !scannedFile} className="bg-slate-900 hover:bg-indigo-600 text-white gap-2 h-14 px-10 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-indigo-500/20 transition-all">
                     {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                     Enregistrer & Transmettre (Temps Réel)
                   </Button>
@@ -444,7 +451,7 @@ export const DashboardReception = () => {
                               </div>
                             </td>
                             <td className="py-4 px-4 font-bold text-slate-700 text-xs">
-                              {d.entreprises?.sigle || 'SGP'}
+                              {(d as any).entite_nom || d.entreprises?.sigle || 'Non Défini'}
                             </td>
                             <td className="py-4 px-4">
                               <div className="flex items-center justify-between gap-2">

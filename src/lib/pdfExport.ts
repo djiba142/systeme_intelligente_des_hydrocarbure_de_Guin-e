@@ -1,14 +1,13 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable, { UserOptions } from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import logo from '@/assets/logo.png';
 import sonapLogo from '@/assets/sonap.jpeg';
 import officialStamp from '@/assets/official_stamp.png';
 
-// Interface pour étendre jsPDF avec autoTable
+// Interface pour étendre jsPDF
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: import('jspdf-autotable').UserOptions) => jsPDF;
     lastAutoTable?: { finalY: number };
   }
 }
@@ -75,8 +74,8 @@ const normalize = (val: string | number | null | undefined): string => {
 
 const formatNumber = (n: number) => n.toLocaleString('fr-FR');
 
-const runTable = (doc: jsPDF, opts: import('jspdf-autotable').UserOptions) => {
-  doc.autoTable(opts);
+const runTable = (doc: jsPDF, opts: UserOptions) => {
+  autoTable(doc, opts);
 };
 
 // Helper: Convert Image URL to Base64 (Pre-loading for PDF)
