@@ -10,12 +10,7 @@ const Index = () => {
   useEffect(() => {
     if (!loading && role) {
       const route = getDashboardRoute();
-      if (window.location.pathname !== route) {
-        console.log(`[INDEX] Redirecting to ${route}`);
-        navigate(route, { replace: true });
-      } else {
-        console.log(`[INDEX] Already at ${route}, stopping redirection.`);
-      }
+      navigate(route, { replace: true });
     }
   }, [role, loading, navigate, getDashboardRoute]);
 

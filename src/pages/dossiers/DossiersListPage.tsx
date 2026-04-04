@@ -221,9 +221,9 @@ export default function DossiersListPage() {
         
         {canCreate && (
           <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto">
-            <Link to="/accueil/reception">
+            <Link to="/dossiers/nouveau">
               <Plus className="h-4 w-4" />
-              Créer au Guichet
+              Nouveau Dossier
             </Link>
           </Button>
         )}
@@ -258,7 +258,7 @@ export default function DossiersListPage() {
                         <span className="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600">
                           {d.numero_dossier}
                         </span>
-                        <h4 className="font-bold text-slate-900">{(d as any).entite_nom || d.entreprises?.nom || 'Entreprise Inconnue'}</h4>
+                        <h4 className="font-bold text-slate-900">{d.entreprises?.nom || 'Entreprise Inconnue'}</h4>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
                         <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {d.type_dossier}</span>

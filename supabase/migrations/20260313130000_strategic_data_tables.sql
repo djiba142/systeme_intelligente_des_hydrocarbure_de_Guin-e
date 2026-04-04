@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS historique_stocks (
     UNIQUE(date_releve)
 );
 
--- 3. Table des importations (Navires) - Prototype Rename to avoid view clash
-CREATE TABLE IF NOT EXISTS importations_v1 (
+-- 3. Table des importations (Navires)
+CREATE TABLE IF NOT EXISTS importations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     navire_nom TEXT NOT NULL,
     produit TEXT NOT NULL CHECK (produit IN ('essence', 'gasoil', 'jet_a1', 'mazout', 'gpl')),
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS importations_v1 (
 -- Enable RLS
 ALTER TABLE prix_officiels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE historique_stocks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE importations_v1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE importations ENABLE ROW LEVEL SECURITY;
 
 -- Permissions de lecture pour ANALYSTE et ADMINS
 CREATE POLICY "Lecture Stratégique pour Analystes et Admins" 
@@ -57,7 +57,7 @@ TO authenticated
 USING (true);
 
 CREATE POLICY "Lecture Importations" 
-ON importations_v1 FOR SELECT 
+ON importations FOR SELECT 
 TO authenticated 
 USING (
     EXISTS (
@@ -80,7 +80,7 @@ USING (
 );
 
 CREATE POLICY "Gestion des Importations" 
-ON importations_v1 FOR ALL 
+ON importations FOR ALL 
 TO authenticated 
 USING (
     EXISTS (

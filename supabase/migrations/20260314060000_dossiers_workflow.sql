@@ -2,8 +2,8 @@
 -- Migration: Workflow Dossiers et Sécurité Intelligente SONAP
 -- Date: 2026-03-14
 
--- 1. Table des dossiers administratifs (SIHG-Dossiers) - Prototype Rename to avoid view clash
-CREATE TABLE IF NOT EXISTS public.dossiers_v1 (
+-- 1. Table des dossiers administratifs (SIHG-Dossiers)
+CREATE TABLE IF NOT EXISTS public.dossiers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     numero_dossier TEXT UNIQUE NOT NULL,
     type_demande TEXT NOT NULL, -- 'ouverture_station', 'agrement_entreprise', 'renouvellement_licence'
@@ -24,10 +24,10 @@ CREATE TABLE IF NOT EXISTS public.dossiers_v1 (
 );
 
 -- 2. Activation du RLS sur les dossiers
-ALTER TABLE public.dossiers_v1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dossiers ENABLE ROW LEVEL SECURITY;
 
 -- 3. Politiques RLS (Lecture pour tous les admins SONAP)
-CREATE POLICY "Admins SONAP can view all dossiers" ON public.dossiers_v1
+CREATE POLICY "Admins SONAP can view all dossiers" ON public.dossiers
     FOR SELECT TO authenticated
     USING (
         EXISTS (
@@ -71,5 +71,5 @@ END;
 $$ language 'plpgsql';
 
 CREATE TRIGGER update_dossiers_updated_at 
-    BEFORE UPDATE ON public.dossiers_v1 
+    BEFORE UPDATE ON public.dossiers 
     FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();

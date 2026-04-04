@@ -28,11 +28,11 @@ interface ImportNavire {
 }
 
 interface NewNavire {
-  nom: FormDataEntryValue | null;
-  imo_number: FormDataEntryValue | null;
-  pavillon: FormDataEntryValue | null;
+  nom: string;
+  imo_number: string;
+  pavillon: string | null;
   capacite_mt: number;
-  capitaine: FormDataEntryValue | null;
+  capitaine: string | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +40,7 @@ const db = supabase as unknown as { from: (table: string) => any };
 
 export default function ImportNaviresPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { role } = useAuth();
@@ -66,6 +67,14 @@ export default function ImportNaviresPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['import-navires'] });
       toast({ title: "Navire ajouté", description: "Le navire a été enregistré dans la flotte." });
+      setIsDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        variant: "destructive", 
+        title: "Erreur", 
+        description: error.message || "Impossible d'enregistrer le navire." 
+      });
     }
   });
 
@@ -90,8 +99,8 @@ export default function ImportNaviresPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          {(role === 'directeur_importation' || role === 'chef_service_importation' || role === 'agent_suivi_cargaison' || role === 'super_admin') && (
-            <Dialog>
+          {(role === 'super_admin' || role === 'directeur_importation' || role === 'agent_importation') && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="h-11 px-6 rounded-xl gap-2 shadow-lg shadow-primary/20 bg-primary">
                   <Plus className="h-4 w-4" /> Enregistrer un Navire
@@ -104,12 +113,18 @@ export default function ImportNaviresPage() {
                 <form className="space-y-4 pt-4" onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
+                  const capacityVal = Number(formData.get('capacite'));
+                  if (isNaN(capacityVal) || capacityVal <= 0) {
+                    toast({ variant: "destructive", title: "Erreur", description: "La capacité doit être un nombre positif." });
+                    return;
+                  }
+
                   createMutation.mutate({
-                    nom: formData.get('nom'),
-                    imo_number: formData.get('imo'),
-                    pavillon: formData.get('pavillon'),
-                    capacite_mt: Number(formData.get('capacite')),
-                    capitaine: formData.get('capitaine'),
+                    nom: formData.get('nom') as string,
+                    imo_number: formData.get('imo') as string,
+                    pavillon: formData.get('pavillon') as string,
+                    capacite_mt: capacityVal,
+                    capitaine: formData.get('capitaine') as string,
                   });
                 }}>
                   <div className="space-y-2">

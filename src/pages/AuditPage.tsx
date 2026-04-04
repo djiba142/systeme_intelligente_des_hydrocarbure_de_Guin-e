@@ -228,19 +228,12 @@ export default function AuditPage() {
         </Alert>
       )}
 
-      {/* Role-aware Info Banner */}
+      {/* Configuration Alert */}
       <Alert className="mb-8 bg-indigo-50 border-indigo-100 rounded-2xl shadow-sm border-l-4 border-l-indigo-500">
         <AlertCircle className="h-5 w-5 text-indigo-600" />
         <AlertDescription className="text-indigo-800 font-medium flex items-center justify-between gap-4">
-          <span>
-            {(currentUserRole === 'super_admin' || currentUserRole === 'service_it') 
-              ? 'Vue complète : Vous visualisez l\'intégralité des journaux d\'audit de toutes les directions.'
-              : currentUserRole === 'directeur_general' || currentUserRole === 'directeur_adjoint'
-                ? 'Vue Direction Générale : Vous visualisez l\'ensemble des journaux d\'audit stratégiques.'
-                : 'Vue restreinte : Seuls vos propres journaux d\'activité et ceux de votre organisation sont affichés.'
-            }
-          </span>
-          {(currentUserRole === 'service_it' || currentUserRole === 'super_admin') && (
+          <span>Le système d'audit est prêt. Si aucun log n'apparaît, assurez-vous d'avoir appliqué la migration SQL dans l'interface Supabase.</span>
+          {currentUserRole === 'service_it' && (
             <Button size="sm" variant="outline" className="bg-white hover:bg-indigo-100 border-indigo-200 text-indigo-700 font-black text-[10px] uppercase tracking-widest gap-2 flex-shrink-0" onClick={testAudit} disabled={loading}>
               {loading ? <Loader2 size={12} className="animate-spin" /> : <Shield size={12} />}
               Tester la liaison

@@ -87,7 +87,6 @@ export default function EntrepriseInfoPage() {
   const { toast } = useToast();
   const [entreprise, setEntreprise] = useState<EntrepriseInfo | null>(null);
   const [stations, setStations] = useState<StationRow[]>([]);
-  const [stats, setStats] = useState({ quotas: 0, dossiers: 0, orders: 0 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<Partial<EntrepriseInfo>>({});
@@ -117,9 +116,8 @@ export default function EntrepriseInfoPage() {
 
       if (error) throw error;
 
-      const entData = data as any;
-      setEntreprise(entData);
-      setFormData(entData);
+      setEntreprise(data);
+      setFormData(data);
 
       // Fetch stations
       const { data: stData } = await supabase
@@ -129,20 +127,6 @@ export default function EntrepriseInfoPage() {
         .order('nom');
 
       setStations(stData || []);
-
-      // Fetch stats
-      const [quotasRes, dossiersRes, ordersRes] = await Promise.all([
-        (supabase as any).from('regulation_quotas').select('id', { count: 'exact' }).eq('entreprise_id', entId).in('statut', ['valide', 'publie']),
-        supabase.from('dossiers').select('id', { count: 'exact' }).eq('entreprise_id', entId).neq('statut', 'approuve'),
-        supabase.from('ordres_livraison').select('id', { count: 'exact' }).eq('entreprise_id', entId).in('statut', ['en_attente', 'approuve', 'en_cours'])
-      ]);
-
-      setStats({
-          quotas: quotasRes.count || 0,
-          dossiers: dossiersRes.count || 0,
-          orders: ordersRes.count || 0,
-      });
-
     } catch (err: any) {
       toast({
         variant: 'destructive',
@@ -465,31 +449,13 @@ export default function EntrepriseInfoPage() {
 
           {/* Quick stats */}
           <div className="grid grid-cols-2 gap-3">
-            <Card className="border-l-4 border-l-blue-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold text-blue-600">{stats.quotas}</p>
-                <p className="text-xs text-muted-foreground mt-1">Quotas actifs</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-purple-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold text-purple-600">{stats.orders}</p>
-                <p className="text-xs text-muted-foreground mt-1">Commandes en cours</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-indigo-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold text-indigo-600">{stats.dossiers}</p>
-                <p className="text-xs text-muted-foreground mt-1">Dossiers en cours</p>
-              </CardContent>
-            </Card>
             <Card className="border-l-4 border-l-emerald-500">
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold text-emerald-600">{stations.filter(s => s.statut === 'ouverte').length}</p>
                 <p className="text-xs text-muted-foreground mt-1">Stations ouvertes</p>
               </CardContent>
             </Card>
-            <Card className="col-span-2 border-l-4 border-l-red-500">
+            <Card className="border-l-4 border-l-red-500">
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold text-red-600">
                   {stations.filter(s => {
@@ -498,7 +464,7 @@ export default function EntrepriseInfoPage() {
                     return ep < 10 || gp < 10;
                   }).length}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Stations : Stocks critiques</p>
+                <p className="text-xs text-muted-foreground mt-1">Stocks critiques</p>
               </CardContent>
             </Card>
           </div>

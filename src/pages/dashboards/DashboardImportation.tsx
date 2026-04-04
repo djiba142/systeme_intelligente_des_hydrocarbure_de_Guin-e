@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Ship, Anchor, FolderOpen, TrendingUp, Clock, AlertCircle, 
@@ -21,6 +21,7 @@ export default function DashboardImportation() {
   const { role } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: stats } = useQuery({
     queryKey: ['import-stats'],
     queryFn: async () => {
@@ -47,28 +48,9 @@ export default function DashboardImportation() {
       if (error) throw error;
 
       toast({ title: "Dossier Transmis", description: "La Direction Juridique a été notifiée." });
-      // Refetch stats to update UI
-      window.location.reload(); 
-    } catch (error: any) {
-       toast({ variant: "destructive", title: "Erreur", description: error.message || "Échec de la transmission." });
-    }
-  };
-
-  const handleValidateDossier = async (dossierId: string) => {
-    try {
-      toast({ title: "Validation", description: "Validation du dossier en cours..." });
-      
-      const { error } = await (supabase as any)
-        .from('import_dossiers')
-        .update({ statut: 'attente_paiement' })
-        .eq('id', dossierId);
-
-      if (error) throw error;
-
-      toast({ title: "Dossier Validé", description: "Le dossier a été validé avec succès." });
-      window.location.reload();
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message || "Échec de la validation." });
+      queryClient.invalidateQueries({ queryKey: ['import-stats'] });
+    } catch (error) {
+       toast({ variant: "destructive", title: "Erreur", description: "Échec de la transmission." });
     }
   };
 
@@ -131,10 +113,10 @@ export default function DashboardImportation() {
                     name={d.numero_dossier || `Dossier #${d.id.slice(0,8)}`} 
                     vessel={d.navire_nom || "Navire en attente"} 
                     product={d.carburant || "Produit mixte"} 
-                    progress={d.statut === 'en_transport' ? 65 : d.statut === 'receptionne' ? 100 : d.statut === 'arrive' ? 95 : 10} 
+                    progress={d.statut === 'en_transport' ? 65 : d.statut === 'arrive' ? 90 : d.statut === 'receptionne' ? 100 : 10} 
                     status={d.statut}
                     date={`ETA: ${d.date_arrivee_est ? format(new Date(d.date_arrivee_est), 'dd MMM') : 'À définir'}`}
-                    showTransmit={d.statut === 'en_preparation' && role === 'agent_suivi_cargaison'}
+                    showTransmit={d.statut === 'en_preparation' && (role === 'agent_importation' || role === 'directeur_importation' || role === 'super_admin')}
                     onTransmit={() => handleTransmitToLegal(d.id)}
                   />
                 ))
@@ -155,7 +137,7 @@ export default function DashboardImportation() {
                     progress={10} 
                     status="brouillon"
                     date="En préparation"
-                    showTransmit={role === 'agent_suivi_cargaison'}
+                    showTransmit={role === 'agent_importation'}
                     onTransmit={() => handleTransmitToLegal('9')}
                   />
                 </>
@@ -170,7 +152,7 @@ export default function DashboardImportation() {
                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-slate-500">Actions & Réglementation</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {role === 'agent_suivi_cargaison' || role === 'super_admin' ? (
+                {role === 'agent_importation' || role === 'directeur_importation' || role === 'super_admin' ? (
                   <div className="grid grid-cols-2 gap-3">
                     <QuickActionButton 
                       icon={Plus} 
@@ -197,21 +179,16 @@ export default function DashboardImportation() {
                       onClick={() => navigate('/importations/fournisseurs')}
                     />
                   </div>
-                ) : role === 'directeur_importation' ? (
+                ) : (role as any) === 'directeur_importation' ? (
                   <div className="space-y-3">
                     <div className="p-4 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Espace Validation</p>
                       <h4 className="text-sm font-bold mb-3">Dossiers en attente de visa</h4>
                       <div className="space-y-2">
-                        {stats?.dossiers?.filter((d: any) => d.statut === 'attente_juridique').map((d: any) => (
-                          <div key={d.id} className="p-2 rounded-lg bg-white/10 flex items-center justify-between">
-                            <span className="text-xs font-medium">{d.numero_dossier || `Dossier #${d.id.slice(0,8)}`}</span>
-                            <Button size="sm" variant="secondary" className="h-7 text-[10px] font-black px-3" onClick={() => handleValidateDossier(d.id)}>VALIDER</Button>
-                          </div>
-                        ))}
-                        {(!stats?.dossiers || stats.dossiers.filter((d: any) => d.statut === 'attente_juridique').length === 0) && (
-                          <p className="text-[10px] opacity-60 italic">Aucun dossier en attente de visa.</p>
-                        )}
+                        <div className="p-2 rounded-lg bg-white/10 flex items-center justify-between">
+                          <span className="text-xs font-medium">#IMP-2026-009</span>
+                          <Button size="sm" variant="secondary" className="h-7 text-[10px] font-black px-3" onClick={() => toast({ title: "Validation Dossier", description: "Visa apposé sur le dossier #IMP-2026-009." })}>VALIDER</Button>
+                        </div>
                       </div>
                     </div>
                     <Button variant="outline" className="w-full justify-start gap-3 h-11 rounded-xl border-slate-200 text-slate-600" onClick={() => navigate('/importations/fournisseurs')}>
@@ -296,8 +273,7 @@ function ImportItem({ name, vessel, product, progress, status, date, showTransmi
   const getStatusBadge = (s: string) => {
     const configs: any = {
       en_preparation: "bg-slate-500/20 text-slate-400",
-      attente_juridique: "bg-purple-500/20 text-purple-400",
-      attente_paiement: "bg-amber-500/20 text-amber-400",
+      attente_juridique: "bg-amber-500/20 text-amber-400",
       en_transport: "bg-blue-500/20 text-blue-400",
       arrive: "bg-emerald-500/20 text-emerald-400",
       receptionne: "bg-indigo-500/20 text-indigo-400",

@@ -8,26 +8,21 @@ import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NationalAutonomyGaugeProps {
-  daysRemaining?: number;
-  fuelType?: 'essence' | 'gasoil';
+  daysRemaining: number;
+  fuelType: 'essence' | 'gasoil';
   maxDays?: number;
-  days?: number;
-  label?: string;
 }
 
 export function NationalAutonomyGauge({ 
   daysRemaining, 
   fuelType, 
-  maxDays = 30,
-  days,
-  label
+  maxDays = 30 
 }: NationalAutonomyGaugeProps) {
-  const finalDays = days !== undefined ? days : (daysRemaining ?? 0);
-  const percentage = Math.min((finalDays / maxDays) * 100, 100);
+  const percentage = Math.min((daysRemaining / maxDays) * 100, 100);
   
   const getStatus = () => {
-    if (finalDays < 7) return 'critical';
-    if (finalDays < 14) return 'warning';
+    if (daysRemaining < 7) return 'critical';
+    if (daysRemaining < 14) return 'warning';
     return 'healthy';
   };
   
@@ -77,7 +72,7 @@ export function NationalAutonomyGauge({
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xl font-bold" style={{ color: colors[status] }}>
-              {finalDays}j
+              {daysRemaining}j
             </span>
           </div>
         </div>
@@ -92,11 +87,11 @@ export function NationalAutonomyGauge({
               <CheckCircle className="h-4 w-4 text-green-500" />
             )}
             <h4 className="font-semibold text-sm">
-              {label || (fuelType === 'essence' ? 'Essence' : 'Gasoil')}
+              {fuelType === 'essence' ? 'Essence' : 'Gasoil'}
             </h4>
           </div>
           <p className="text-2xl font-bold font-display">
-            {finalDays} jours
+            {daysRemaining} jours
           </p>
           <p className="text-xs text-muted-foreground">
             d'autonomie nationale

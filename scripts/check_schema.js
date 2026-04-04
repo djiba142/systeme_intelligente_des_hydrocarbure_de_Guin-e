@@ -6,7 +6,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function checkSchema() {
-  const { data: sales, error: salesError } = await supabase.from('ventes').select('*').limit(1)
+  const { data: sales, error: salesError } = await supabase.from('ventes' as any).select('*').limit(1)
   console.log('Ventes sample:', sales)
   
   const { data: stations, error: stationsError } = await supabase.from('stations').select('*').limit(1)

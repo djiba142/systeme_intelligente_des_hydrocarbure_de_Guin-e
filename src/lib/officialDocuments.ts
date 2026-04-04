@@ -1,10 +1,9 @@
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { format } from 'date-fns';
 import logoUrl from '@/assets/logo.png';
 import sonapLogoUrl from '@/assets/sonap.jpeg';
-import officialStampUrl from '@/assets/official_stamp.png';
 
 interface OfficialDocData {
   type: 'autorisation' | 'licence' | 'conformite';
@@ -60,9 +59,9 @@ export const generateOfficialSONAPDocument = async (data: OfficialDocData) => {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(0);
-  doc.text("RÉPUBLIQUE DE GUINEE", W / 2, 8, { align: "center" });
+  doc.text("RÉPUBLIQUE DE GUINEE", W / 2, 12, { align: "center" });
   doc.setFontSize(7);
-  doc.text("Travail - Justice - Solidarité", W / 2, 12, { align: "center" });
+  doc.text("Travail - Justice - Solidarité", W / 2, 16, { align: "center" });
   
   doc.setFontSize(14);
   doc.setTextColor(206, 17, 38); // Rouge
@@ -115,7 +114,7 @@ export const generateOfficialSONAPDocument = async (data: OfficialDocData) => {
   let lastY = 165;
   if (data.details) {
     const tableData = Object.entries(data.details).map(([key, value]) => [key, value]);
-    autoTable(doc, {
+    (doc as any).autoTable({
       startY: 165,
       head: [['Paramètre de Contrôle', 'Valeur / État']],
       body: tableData,
@@ -155,21 +154,13 @@ export const generateOfficialSONAPDocument = async (data: OfficialDocData) => {
   doc.text("Le Directeur de la", W - 52, sigY, { align: "center" });
   doc.text(data.signatureRole.toUpperCase(), W - 52, sigY + 6, { align: "center" });
   
-  // Official Digital Stamp
-  try {
-    const stampB64 = await getLogoBase64(officialStampUrl);
-    if (stampB64) {
-      doc.addImage(stampB64, 'PNG', W - 140, sigY - 10, 45, 45);
-    }
-  } catch (e) {
-    // Fallback: Seal placeholder
-    doc.setDrawColor(0, 148, 77);
-    doc.setLineWidth(0.5);
-    doc.circle(W - 120, sigY + 10, 12);
-    doc.setFontSize(6);
-    doc.text("SCEAU", W - 120, sigY + 9, { align: "center" });
-    doc.text("OFFICIEL", W - 120, sigY + 13, { align: "center" });
-  }
+  // Seal placeholder
+  doc.setDrawColor(0, 148, 77);
+  doc.setLineWidth(0.5);
+  doc.circle(W - 120, sigY + 10, 12);
+  doc.setFontSize(6);
+  doc.text("SCEAU", W - 120, sigY + 9, { align: "center" });
+  doc.text("OFFICIEL", W - 120, sigY + 13, { align: "center" });
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "italic");

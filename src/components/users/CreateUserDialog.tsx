@@ -23,8 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { ROLE_LABELS, AppRole } from '@/types/roles';
-import { useAuth } from '@/contexts/AuthContext';
+import { ROLE_LABELS, AppRole, useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 // All valid app roles for validation
@@ -33,97 +32,63 @@ const ALL_APP_ROLES = [
   'admin_etat',
   'directeur_general',
   'directeur_adjoint',
-  'secretariat_direction',
+  'secretaire_general',
   'directeur_aval',
   'directeur_adjoint_aval',
   'chef_division_distribution',
-  'chef_service_aval',
-  'agent_technique_aval',
+  'chef_bureau_aval',
+  'agent_supervision_aval',
   'controleur_distribution',
   'technicien_support_dsa',
   'technicien_flux',
   'inspecteur',
-  'admin_central',
-  'chef_regulation',
-  'analyste_regulation',
   'service_it',
-  'directeur_juridique',
-  'juriste',
-  'charge_conformite',
-  'assistant_juridique',
-  'directeur_importation',
-  'chef_service_importation',
-  'agent_suivi_cargaison',
-  'agent_reception_port',
-  'analyste_approvisionnement',
-  'directeur_administratif',
-  'chef_service_administratif',
-  'gestionnaire_documentaire',
-  'directeur_logistique',
-  'agent_logistique',
-  'responsable_depots',
-  'responsable_transport',
-  'operateur_logistique',
-  'technicien_aval',
-  'agent_reception',
-  'analyste',
   'responsable_entreprise',
-  'gestionnaire_station',
-  'superviseur_aval',
-  'personnel_admin',
-  'directeur_financier',
-  'gestionnaire',
+  'responsable_stations',
+  'gestionnaire_livraisons',
+  'operateur_entreprise',
+  'directeur_importation',
+  'agent_importation',
+  'responsable_stock',
+  'agent_station',
+  'technicien_aval',
 ] as const;
 
 export const POSTE_ROLES: Record<string, AppRole> = {
-  'Directeur Système Informatique': 'super_admin',
-  'Directeur Adjoint Système Informatique': 'service_it',
+  'Directeur DSI': 'service_it',
   'Directeur des Services Aval (DSA)': 'directeur_aval',
-  'Directeur Juridique & Conformité': 'directeur_juridique',
+
   'Directeur Importation / Approvisionnement': 'directeur_importation',
-  'Administrateur État (SONAP)': 'admin_etat',
+  'Administrateur Central État (Régulation)': 'admin_etat',
   'Directeur Général (DG)': 'directeur_general',
   'Directeur Général Adjoint (DGA)': 'directeur_adjoint',
-  'Secrétariat de Direction': 'secretariat_direction',
-  'Directeur Administratif (DA)': 'directeur_administratif',
-  'Directeur Logistique': 'directeur_logistique',
-  'Agent de Réception / Courrier (Accueil)': 'agent_reception',
 };
 
 // Organigramme Officiel SONAP / SIHG
 const ORGANISATIONS = [
-  { id: 'direction_generale', label: 'Direction Générale' },
-  { id: 'analyse', label: 'Régulation & Quotas (Admin Central)' },
+  { id: 'admin_central', label: 'Administration Centrale' },
   { id: 'dsi', label: 'Direction des Systèmes Informatiques (DSI)' },
-  { id: 'dsa', label: 'Direction des Services Aval (DSA)' },
+  { id: 'dsa', label: 'Direction des Services Aval' },
   { id: 'inspecteurs', label: 'Corps National des Inspecteurs' },
-  { id: 'juridique', label: 'Direction Juridique & Conformité (DJ/C)' },
-  { id: 'administratif', label: 'Direction Administrative (DA)' },
-  { id: 'logistique', label: 'Direction Logistique' },
   { id: 'importation', label: 'Direction Importation / Approvisionnement' },
-  { id: 'accueil', label: 'Service Courrier & Accueil' },
-  { id: 'entreprise', label: 'Entreprise & Station-Service' },
+  { id: 'entreprises', label: 'Entreprises Pétrolières Agréées (Siège)' },
+  { id: 'stations', label: 'Stations-Service (Opérations)' },
+
 ];
 
 const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
-  // ─── Direction Générale ───────────────────────────────
-  direction_generale: [
+  // ─── Administration Centrale ───────────────────────────────
+  admin_central: [
     { label: '1. Directeur Général (DG)', role: 'directeur_general' },
     { label: '2. Directeur Général Adjoint (DGA)', role: 'directeur_adjoint' },
-    { label: '3. Secrétariat de Direction', role: 'secretariat_direction' },
+    { label: '3. Administrateur Central État (Régulation)', role: 'admin_etat' },
+    { label: '4. Secrétaire Général (A.C.)', role: 'secretaire_general' },
+    { label: '5. Inspecteur Régulation Pétrolière', role: 'inspecteur' },
   ],
-  // ─── Cellule d'Analyse Stratégique ──────────────────────────────────────
-  analyse: [
-    { label: 'Administrateur Central', role: 'admin_central' },
-    { label: 'Chef Service Régulation', role: 'chef_regulation' },
-    { label: 'Analyste Régulation', role: 'analyste_regulation' },
-    { label: 'Analyste Stats', role: 'analyste' },
-  ],
-
   // ─── DSI — Direction des Systèmes Informatiques ─────────────────────────────
   dsi: [
-    { label: 'Directeur Système Informatique', role: 'super_admin' },
-    { label: 'Directeur Adjoint Système Informatique', role: 'service_it' },
+    { label: 'Super Administrateur National', role: 'super_admin' },
+    { label: 'Directeur DSI', role: 'service_it' },
     { label: 'Administrateur Système', role: 'service_it' },
     { label: 'Ingénieur Réseau Informatique', role: 'service_it' },
     { label: 'Support Technique IT', role: 'service_it' },
@@ -132,8 +97,13 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
   // ─── DSA — Direction des Services Aval ─────────────────────────────────────
   dsa: [
     { label: 'Directeur des Services Aval (DSA)', role: 'directeur_aval' },
-    { label: 'Chef Service Aval', role: 'chef_service_aval' },
-    { label: 'Agent Technique Aval', role: 'agent_technique_aval' },
+    { label: 'Directeur Adjoint des Services Aval', role: 'directeur_adjoint_aval' },
+    { label: 'Chef de Division Distribution', role: 'chef_division_distribution' },
+    { label: 'Chef de Bureau Aval', role: 'chef_bureau_aval' },
+    { label: 'Agent de Supervision Aval', role: 'agent_supervision_aval' },
+    { label: 'Contrôleur de Distribution', role: 'controleur_distribution' },
+    { label: 'Technicien Support DSA', role: 'technicien_support_dsa' },
+    { label: 'Analyste Approvisionnement', role: 'agent_importation' },
   ],
   // ─── Corps des Inspecteurs ─────────────────────────────────────────────────
   inspecteurs: [
@@ -142,46 +112,26 @@ const POSTES_PAR_ORG: Record<string, { label: string, role: AppRole }[]> = {
     { label: 'Inspecteur Préfectoral', role: 'inspecteur' },
     { label: 'Inspecteur Local (Terrain)', role: 'inspecteur' },
   ],
-  // ─── Direction Juridique & Conformité ─────────────────────────────────────
-  juridique: [
-    { label: 'Directeur Juridique & Conformité', role: 'directeur_juridique' },
-    { label: 'Juriste / Conseiller Juridique', role: 'juriste' },
-    { label: 'Chargé de Conformité Réglementaire', role: 'charge_conformite' },
-    { label: 'Assistant Administratif DJ/C', role: 'assistant_juridique' },
-  ],
   // ─── Direction Importation / Approvisionnement ───────────────────────────
   importation: [
     { label: 'Directeur Importation / Approvisionnement', role: 'directeur_importation' },
-    { label: 'Chef Service Importation', role: 'chef_service_importation' },
-    { label: 'Agent de Suivi des Cargaisons', role: 'agent_suivi_cargaison' },
-    { label: 'Agent de Réception (Port)', role: 'agent_reception_port' },
-    { label: 'Analyste Approvisionnement', role: 'analyste_approvisionnement' },
-  ],
-  // ─── Service Courrier & Accueil ──────────────────────────────────────────
-  accueil: [
-    { label: 'Agent de Réception / Courrier (Accueil)', role: 'agent_reception' },
-    { label: 'Chef de Service Accueil', role: 'super_admin' },
+    { label: 'Chef de Bureau Importation', role: 'agent_importation' },
+    { label: 'Agent de Suivi des Cargaisons', role: 'agent_importation' },
+    { label: 'Analyste Approvisionnement', role: 'agent_importation' },
   ],
 
-  // ─── Direction Administrative ──────────────────────────────
-  administratif: [
-    { label: 'Directeur Administratif (DA)', role: 'directeur_administratif' },
-    { label: 'Chef de Service Administratif', role: 'chef_service_administratif' },
-    { label: 'Gestionnaire Documentaire', role: 'gestionnaire_documentaire' },
+  // ─── Entreprises Pétrolières ───────────────────────────────────────────────
+  entreprises: [
+    { label: '1. Directeur d\'Entreprise Pétrolière', role: 'responsable_entreprise' },
+    { label: '2. Responsable Stations-Service', role: 'responsable_stations' },
+    { label: '3. Gestionnaire Livraisons', role: 'gestionnaire_livraisons' },
+    { label: '4. Opérateur Logistique Entreprise', role: 'operateur_entreprise' },
   ],
-  // ─── Direction Logistique ──────────────────────────────────
-  logistique: [
-    { label: 'Directeur Logistique', role: 'directeur_logistique' },
-    { label: 'Agent Logistique', role: 'agent_logistique' },
-    { label: 'Responsable des Dépôts', role: 'responsable_depots' },
-    { label: 'Responsable Transport', role: 'responsable_transport' },
-    { label: 'Opérateur Logistique Terrain', role: 'operateur_logistique' },
-  ],
-  // ─── Entreprises & Stations ──────────────────────────────────
-  entreprise: [
-    { label: 'Responsable Entreprise', role: 'responsable_entreprise' },
-    { label: 'Gestionnaire de Station', role: 'gestionnaire_station' },
-    { label: 'Personnel Entreprise', role: 'personnel_admin' },
+  // ─── Stations-Service ──────────────────────────────────────────────────────
+  stations: [
+    { label: 'Gérant de Station', role: 'responsable_stations' },
+    { label: 'Responsable Stock Station', role: 'responsable_stock' },
+    { label: 'Agent de Station', role: 'agent_station' },
   ],
 };
 
@@ -201,9 +151,10 @@ const userSchema = z.object({
   region: z.string().min(1, 'Région requise'),
   prefecture: z.string().optional(),
   commune: z.string().optional(),
+  entrepriseId: z.string().optional(),
+  stationId: z.string().optional(),
   forcePasswordChange: z.boolean().default(false),
   role: z.enum(ALL_APP_ROLES),
-  entreprise_id: z.string().optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -223,6 +174,8 @@ interface CreateUserDialogProps {
     date_naissance?: string;
     adresse?: string;
     matricule?: string;
+    entreprise_id?: string;
+    station_id?: string;
     region?: string;
     prefecture?: string;
     commune?: string;
@@ -230,7 +183,6 @@ interface CreateUserDialogProps {
     direction?: string;
     poste?: string;
     force_password_change?: boolean;
-    entreprise_id?: string;
   };
 }
 
@@ -238,9 +190,9 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
   const { createUser, updateUser, role: currentUserRole, profile: currentUserProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [entreprises, setEntreprises] = useState<{ id: string, nom: string }[]>([]);
+  const [stations, setStations] = useState<{ id: string, nom: string }[]>([]);
   const isEditMode = !!initialData;
-
-  const [entreprises, setEntreprises] = useState<{id: string, nom: string}[]>([]);
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
@@ -259,9 +211,10 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
       region: '',
       prefecture: '',
       commune: '',
+      entrepriseId: '',
+      stationId: '',
       forcePasswordChange: true,
       role: undefined as any,
-      entreprise_id: '',
     },
   });
 
@@ -277,6 +230,8 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
         dateNaissance: initialData.date_naissance || '',
         adresse: initialData.adresse || '',
         matricule: initialData.matricule || '',
+        entrepriseId: initialData.entreprise_id || '',
+        stationId: initialData.station_id || '',
         organisation: initialData.organisation || '',
         direction: initialData.direction || '',
         poste: initialData.poste || '',
@@ -284,7 +239,6 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
         prefecture: initialData.prefecture || '',
         commune: initialData.commune || '',
         forcePasswordChange: initialData.force_password_change || false,
-        entreprise_id: initialData.entreprise_id || '',
         password: '',
       });
     } else if (open && !initialData) {
@@ -303,10 +257,11 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
         region: '',
         prefecture: '',
         commune: '',
+        entrepriseId: '',
+        stationId: '',
         forcePasswordChange: true,
         password: '',
         role: undefined as any,
-        entreprise_id: '',
       });
     }
   }, [open, initialData, form]);
@@ -315,12 +270,8 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
 
   const fetchData = useCallback(async () => {
     try {
-      const { data: entreprisesData, error: entError } = await supabase
-        .from('entreprises')
-        .select('id, nom')
-        .order('nom');
-      
-      if (!entError && entreprisesData) setEntreprises(entreprisesData);
+      const { data: entData } = await supabase.from('entreprises').select('id, nom');
+      setEntreprises(entData || []);
     } catch (error) {
       console.error('Error fetching data for dialog:', error);
     }
@@ -332,7 +283,37 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
     }
   }, [open, fetchData]);
 
+  // Auto-set company and role for responsable_entreprise users
+  useEffect(() => {
+    if (currentUserRole === 'responsable_entreprise' && currentUserProfile?.entreprise_id && open) {
+      form.setValue('entrepriseId', currentUserProfile.entreprise_id);
+      form.setValue('organisation', 'entreprises');
+      form.setValue('role', 'operateur_entreprise');
+    }
+  }, [currentUserRole, currentUserProfile, open, form]);
 
+  const watchedEntrepriseId = form.watch('entrepriseId');
+
+  // Fetch stations when entreprise changes
+  useEffect(() => {
+    const fetchStations = async () => {
+      if (watchedEntrepriseId) {
+        try {
+          const { data } = await supabase
+            .from('stations')
+            .select('id, nom')
+            .eq('entreprise_id', watchedEntrepriseId)
+            .order('nom');
+          setStations(data || []);
+        } catch (error) {
+          console.error('Error fetching stations:', error);
+        }
+      } else {
+        setStations([]);
+      }
+    };
+    fetchStations();
+  }, [watchedEntrepriseId]);
 
   const watchedOrg = form.watch('organisation');
   const watchedPoste = form.watch('poste');
@@ -341,7 +322,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
   useEffect(() => {
     if (watchedOrg && watchedPoste) {
       const posteInfo = POSTES_PAR_ORG[watchedOrg]?.find(p => p.label === watchedPoste);
-      if (posteInfo) {
+      if (posteInfo && !isEditMode) {
         form.setValue('role', posteInfo.role);
       }
     }
@@ -357,6 +338,8 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
           fullName: data.fullName,
           prenom: data.prenom,
           role: data.role as AppRole,
+          entrepriseId: data.entrepriseId || undefined,
+          stationId: data.stationId || undefined,
           organisation: data.organisation,
           direction: data.direction,
           poste: data.poste,
@@ -368,7 +351,6 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
           prefecture: data.prefecture,
           commune: data.commune,
           forcePasswordChange: data.forcePasswordChange,
-          entreprise_id: data.entreprise_id || undefined,
         });
         if (error) throw error;
 
@@ -393,6 +375,8 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
           fullName: data.fullName,
           prenom: data.prenom,
           role: data.role as AppRole,
+          entrepriseId: data.entrepriseId || undefined,
+          stationId: data.stationId || undefined,
           organisation: data.organisation,
           direction: data.direction,
           poste: data.poste,
@@ -404,7 +388,6 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
           prefecture: data.prefecture,
           commune: data.commune,
           forcePasswordChange: data.forcePasswordChange,
-          entreprise_id: data.entreprise_id || undefined,
         });
         if (error) throw error;
 
@@ -441,52 +424,47 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
     if (currentUserRole === 'super_admin') {
       // Peut créer : Tout le monde (Autorité suprême)
       return [
-        'super_admin', 'admin_etat', 'directeur_general', 'directeur_adjoint', 'secretariat_direction',
+        'super_admin', 'admin_etat', 'directeur_general', 'directeur_adjoint',
         'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution',
-        'chef_service_aval', 'agent_technique_aval', 'controleur_distribution',
+        'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
         'technicien_support_dsa', 'technicien_flux',
-        'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique',
-        'directeur_importation', 'agent_suivi_cargaison',
-        'directeur_administratif', 'chef_service_administratif', 'gestionnaire_documentaire',
-        'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique',
-        'technicien_aval', 'agent_reception', 'admin_central', 'chef_regulation', 'analyste_regulation', 'inspecteur', 'service_it', 'analyste'
+        'inspecteur', 'service_it', 'responsable_entreprise',
+        'operateur_entreprise',
+        'directeur_importation', 'agent_importation',
+        'responsable_stock', 'agent_station', 'technicien_aval'
       ];
     }
 
     // 2️⃣ Administrateur central État (DG / DGA / A.C.)
-    if (['admin_etat', 'directeur_general', 'directeur_adjoint', 'secretariat_direction'].includes(currentUserRole || '')) {
+    if (['admin_etat', 'directeur_general', 'directeur_adjoint', 'secretaire_general'].includes(currentUserRole || '')) {
       return [
         'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution',
-        'chef_service_aval', 'agent_technique_aval', 'controleur_distribution',
-        'admin_central', 'chef_regulation', 'analyste_regulation', 'secretariat_direction',
-        'directeur_importation', 'agent_suivi_cargaison',
-        'directeur_administratif', 'chef_service_administratif', 'gestionnaire_documentaire',
-        'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique',
-        'agent_reception'
+        'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
+        'technicien_support_dsa', 'technicien_flux', 'technicien_aval',
+        'responsable_entreprise', 'operateur_entreprise', 'responsable_stations', 'responsable_stock', 'agent_station',
+        'inspecteur',
+        'directeur_importation', 'agent_importation'
       ];
     }
 
     // 3️⃣ Directions Thématiques
-    if (currentUserRole === 'directeur_juridique') return ['juriste', 'charge_conformite', 'assistant_juridique'];
-    if (currentUserRole === 'directeur_importation') return ['agent_suivi_cargaison'];
-    if (currentUserRole === 'directeur_administratif') return ['chef_service_administratif', 'gestionnaire_documentaire'];
-    if (currentUserRole === 'directeur_logistique') return ['agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique'];
-    if (currentUserRole === 'directeur_aval') return ['directeur_adjoint_aval', 'chef_division_distribution', 'chef_service_aval', 'agent_technique_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'technicien_aval'];
+    if (currentUserRole === 'directeur_importation') return ['agent_importation'];
+    if (currentUserRole === 'directeur_aval') return ['directeur_adjoint_aval', 'chef_division_distribution', 'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution', 'technicien_support_dsa', 'technicien_flux', 'technicien_aval'];
 
     if (currentUserRole === 'service_it') {
       return [
         'super_admin', 'service_it', 'admin_etat', 'directeur_general', 'directeur_adjoint',
         'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution',
-        'chef_service_aval', 'agent_technique_aval', 'controleur_distribution',
+        'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
         'technicien_support_dsa', 'technicien_flux', 'technicien_aval',
-        'directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique',
-        'directeur_importation', 'agent_suivi_cargaison',
-        'directeur_administratif', 'chef_service_administratif', 'gestionnaire_documentaire',
-        'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique',
-        'agent_reception'
+        'directeur_importation', 'agent_importation',
+        'responsable_stock', 'agent_station'
       ];
     }
 
+    if (currentUserRole === 'responsable_entreprise') {
+      return ['responsable_entreprise', 'operateur_entreprise', 'responsable_stations', 'responsable_stock', 'agent_station'];
+    }
     return [];
   };
 
@@ -498,18 +476,19 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
 
     // DSA Supervisor can only see DSA items
     if (currentUserRole === 'directeur_aval' || currentUserRole === 'directeur_adjoint_aval') {
-      return ['dsa', 'entreprise'].includes(org.id);
+      return ['dsa'].includes(org.id);
     }
 
+    // Entreprise Manager can only see Stations and Entreprises (their own)
+    if (currentUserRole === 'responsable_entreprise') {
+      return ['entreprises', 'stations'].includes(org.id);
+    }
 
     // Direction specific filters
-    if (currentUserRole === 'directeur_juridique') return org.id === 'juridique';
     if (currentUserRole === 'directeur_importation') return org.id === 'importation';
-    if (currentUserRole === 'directeur_administratif') return org.id === 'administratif';
-    if (currentUserRole === 'directeur_logistique') return org.id === 'logistique';
 
-    // Admin Etat / DG / Secrétariat can see everything related to business but not system
-    if (['admin_etat', 'directeur_general', 'directeur_adjoint', 'secretariat_direction'].includes(currentUserRole || '')) {
+    // Admin Etat / DG can see everything related to business but not system
+    if (['admin_etat', 'directeur_general', 'directeur_adjoint'].includes(currentUserRole || '')) {
       return !['dsi'].includes(org.id);
     }
 
@@ -518,9 +497,14 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
 
   // Roles that need an enterprise assignment
   const rolesNeedingEntreprise: AppRole[] = [
-    'agent_technique_aval',
+    'responsable_entreprise',
+    'operateur_entreprise',
+    'responsable_stations',
+    'responsable_stock',
+    'agent_station',
+    'agent_supervision_aval',
     'controleur_distribution',
-    'chef_service_aval',
+    'chef_bureau_aval',
   ];
 
   return (
@@ -593,11 +577,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Organisation *</Label>
-                <Select value={form.watch('organisation')} onValueChange={(v) => { 
-                  form.setValue('organisation', v); 
-                  form.setValue('poste', ''); 
-                  form.setValue('entreprise_id', '');
-                }}>
+                <Select value={form.watch('organisation')} onValueChange={(v) => { form.setValue('organisation', v); form.setValue('poste', ''); }}>
                   <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Choisir" /></SelectTrigger>
                   <SelectContent>
                     {allowedOrganisations.map(org => <SelectItem key={org.id} value={org.id}>{org.label}</SelectItem>)}
@@ -637,53 +617,53 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
                   </p>
                 )}
               </div>
+              <div className="col-span-2 space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <Label className="text-primary font-bold flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  Rôle & Niveau d'Accès Système *
+                </Label>
+                <Select value={form.watch('role')} onValueChange={(v) => form.setValue('role', v as AppRole)}>
+                  <SelectTrigger className="rounded-xl border-slate-200 bg-white">
+                    <SelectValue placeholder="Déterminé par le poste" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Niveau National */}
+                    <div className="px-2 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Niveau National (SIHG / SONAP)</div>
+                      {allowedRoles.filter(r => [
+                        'super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'service_it', 'secretaire_general',
+                        'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution',
+                        'chef_bureau_aval', 'agent_supervision_aval', 'controleur_distribution',
+                        'technicien_support_dsa', 'technicien_flux', 'technicien_aval',
+                        'inspecteur', 
+                        'directeur_importation', 'agent_importation',
+                        'directeur_administratif', 'chef_service_administratif', 'agent_administratif', 'personnel_admin', 'gestionnaire_documentaire'
+                      ].includes(r)).map(r => (
+                        <SelectItem key={r} value={r} className="text-xs">{ROLE_LABELS[r]}</SelectItem>
+                      ))}
 
-              {form.watch('organisation') === 'entreprise' && (
-                <div className="space-y-2 col-span-2">
-                  <Label>Compagnie / Entreprise *</Label>
-                  <Select 
-                    value={form.watch('entreprise_id')} 
-                    onValueChange={(v) => form.setValue('entreprise_id', v)}
-                  >
-                    <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Choisir une compagnie" /></SelectTrigger>
-                    <SelectContent>
-                      {entreprises.map(e => <SelectItem key={e.id} value={e.id}>{e.nom}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.entreprise_id && (
-                    <p className="text-xs font-bold text-red-500 mt-1 uppercase tracking-tighter italic">
-                      {form.formState.errors.entreprise_id.message}
-                    </p>
-                  )}
-                </div>
-              )}
+                    {/* Niveau Entreprise */}
+                    <div className="px-2 py-1.5 text-[10px] font-black text-blue-400 uppercase tracking-widest bg-blue-50/10 mt-2">Niveau Entreprise Pétrolière</div>
+                    {allowedRoles.filter(r => ['responsable_entreprise', 'operateur_entreprise', 'responsable_stations', 'responsable_stock', 'agent_station'].includes(r)).map(r => (
+                      <SelectItem key={r} value={r} className="text-xs">{ROLE_LABELS[r]}</SelectItem>
+                    ))}
 
-              {form.watch('role') && (
-                <div className="col-span-2 space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center justify-between">
-                  <div>
-                    <Label className="text-primary font-bold flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4" />
-                      Niveau d'Accès Système
-                    </Label>
-                    <p className="text-[9px] text-muted-foreground italic px-1 mt-1">
-                      Privilèges automatiquement déterminés par le poste.
-                    </p>
-                  </div>
-                  <div>
-                  {form.watch('role') && (
-                    <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
-                      {ROLE_LABELS[form.watch('role')] || form.watch('role')}
-                    </Badge>
-                  )}
-                  </div>
-                  {form.formState.errors.role && (
-                    <p className="text-xs font-bold text-red-500 mt-1 uppercase tracking-tighter italic w-full">
-                      {form.formState.errors.role.message}
-                    </p>
-                  )}
-                </div>
-              )}
 
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.role && (
+                  <p className="text-xs font-bold text-red-500 mt-1 uppercase tracking-tighter italic">
+                    {form.formState.errors.role.message}
+                  </p>
+                )}
+                <p className="text-[9px] text-muted-foreground italic px-1">
+                  Le rôle définit les permissions d'accès et de modification dans SIHG.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Direction / Département</Label>
+                <Input {...form.register('direction')} placeholder="Ex: Ressources Humaines" className="rounded-xl border-slate-200" />
+                {form.formState.errors.direction && <p className="text-[10px] text-red-500 font-bold">{form.formState.errors.direction.message}</p>}
+              </div>
               <div className="space-y-2">
                 <Label>Matricule professionnel *</Label>
                 <Input {...form.register('matricule')} placeholder="MAT-XXXX" className="rounded-xl border-slate-200 uppercase" />
@@ -694,6 +674,27 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated, initialDat
                 )}
               </div>
 
+              {/* Entreprise & Station (Dynamique) */}
+              {rolesNeedingEntreprise.includes(selectedRole as AppRole) && (
+                <div className="col-span-2 space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label>Entreprise Pétrolière Rattachée *</Label>
+                    <Select
+                      value={form.watch('entrepriseId')}
+                      onValueChange={(v) => { form.setValue('entrepriseId', v); form.setValue('stationId', ''); }}
+                      disabled={currentUserRole === 'responsable_entreprise'}
+                    >
+                      <SelectTrigger className="rounded-xl border-primary/30 bg-primary/5"><SelectValue placeholder="Choisir l'entreprise" /></SelectTrigger>
+                      <SelectContent>
+                        {entreprises.map(e => <SelectItem key={e.id} value={e.id}>{e.nom}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.entrepriseId && <p className="text-[10px] text-red-500 font-bold">{form.formState.errors.entrepriseId.message}</p>}
+                  </div>
+
+
+                </div>
+              )}
             </div>
           </div>
 

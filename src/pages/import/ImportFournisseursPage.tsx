@@ -31,11 +31,11 @@ interface ImportFournisseur {
 }
 
 interface NewFournisseur {
-  nom: FormDataEntryValue | null;
-  pays: FormDataEntryValue | null;
-  contact_email: FormDataEntryValue | null;
-  contact_tel: FormDataEntryValue | null;
-  adresse: FormDataEntryValue | null;
+  nom: string;
+  pays: string;
+  contact_email: string | null;
+  contact_tel: string | null;
+  adresse: string | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,6 +43,7 @@ const db = supabase as unknown as { from: (table: string) => any };
 
 export default function ImportFournisseursPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { role } = useAuth();
@@ -69,6 +70,14 @@ export default function ImportFournisseursPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['import-fournisseurs'] });
       toast({ title: "Succès", description: "Fournisseur ajouté avec succès." });
+      setIsDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        variant: "destructive", 
+        title: "Erreur", 
+        description: error.message || "Impossible d'enregistrer le fournisseur." 
+      });
     }
   });
 
@@ -93,10 +102,10 @@ export default function ImportFournisseursPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          {(role === 'directeur_importation' || role === 'chef_service_importation' || role === 'agent_suivi_cargaison' || role === 'super_admin') && (
-            <Dialog>
+          {(role === 'super_admin' || role === 'directeur_importation' || role === 'agent_importation') && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="h-11 px-6 rounded-xl gap-2 shadow-lg shadow-primary/20">
+                <Button className="h-11 px-6 rounded-xl gap-2 shadow-lg shadow-primary/20 bg-slate-900 hover:bg-slate-800 text-white font-bold">
                   <Plus className="h-4 w-4" /> Nouveau Fournisseur
                 </Button>
               </DialogTrigger>
@@ -108,11 +117,11 @@ export default function ImportFournisseursPage() {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
                   createMutation.mutate({
-                    nom: formData.get('nom'),
-                    pays: formData.get('pays'),
-                    contact_email: formData.get('email'),
-                    contact_tel: formData.get('tel'),
-                    adresse: formData.get('adresse'),
+                    nom: formData.get('nom') as string,
+                    pays: formData.get('pays') as string,
+                    contact_email: formData.get('email') as string | null,
+                    contact_tel: formData.get('tel') as string | null,
+                    adresse: formData.get('adresse') as string | null,
                   });
                 }}>
                   <div className="space-y-2">
@@ -193,7 +202,7 @@ export default function ImportFournisseursPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {(role === 'directeur_importation' || role === 'chef_service_importation' || role === 'agent_suivi_cargaison' || role === 'super_admin') && (
+                    {role !== 'super_admin' && (
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                         <Edit className="h-4 w-4" />
                       </Button>

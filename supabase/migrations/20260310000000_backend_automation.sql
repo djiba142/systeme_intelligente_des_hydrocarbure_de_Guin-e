@@ -128,7 +128,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Audit critical tables
 CREATE TRIGGER tr_audit_stations AFTER INSERT OR UPDATE OR DELETE ON public.stations FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
-CREATE TRIGGER tr_audit_importations AFTER INSERT OR UPDATE OR DELETE ON public.importations_v1 FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
+CREATE TRIGGER tr_audit_importations AFTER INSERT OR UPDATE OR DELETE ON public.importations FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
 CREATE TRIGGER tr_audit_livraisons AFTER INSERT OR UPDATE OR DELETE ON public.livraisons FOR EACH ROW EXECUTE FUNCTION public.process_audit_log();
 
 COMMIT;

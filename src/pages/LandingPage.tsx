@@ -1,7 +1,6 @@
 import React from 'react';
 import { LandingNavbar } from '@/components/landing/LandingNavbar';
 import { LandingHero } from '@/components/landing/LandingHero';
-import { LandingSystemExplainer } from '@/components/landing/LandingSystemExplainer';
 import { LandingStats } from '@/components/landing/LandingStats';
 import { LandingFeatures } from '@/components/landing/LandingFeatures';
 import { LandingServices } from '@/components/landing/LandingServices';
@@ -13,7 +12,6 @@ export default function LandingPage() {
             <LandingNavbar />
             <main>
                 <LandingHero />
-                <LandingSystemExplainer />
                 <LandingStats />
                 <LandingServices />
                 <LandingFeatures />

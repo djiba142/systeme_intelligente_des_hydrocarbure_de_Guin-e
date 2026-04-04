@@ -63,7 +63,7 @@ export default function OrdersPage() {
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-    const { role, profile } = useAuth();
+    const { role } = useAuth();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -89,7 +89,7 @@ export default function OrdersPage() {
 
     const fetchOrders = async () => {
         try {
-            let query = supabase
+            const { data, error } = await supabase
                 .from('ordres_livraison')
                 .select(`
           *,
@@ -97,12 +97,6 @@ export default function OrdersPage() {
           station:stations(nom, ville, statut, entreprise:entreprises(nom, sigle))
         `)
                 .order('created_at', { ascending: false });
-
-            if (role === 'responsable_entreprise' && profile?.entreprise_id) {
-                query = query.eq('entreprise_id', profile.entreprise_id);
-            }
-
-            const { data, error } = await query;
 
             if (error) throw error;
             setOrders((data as unknown as Order[]) || []);
@@ -252,7 +246,7 @@ export default function OrdersPage() {
                                                 </Button>
 
                                                 {/* Sélecteur de statut */}
-                                                {(['admin_etat', 'super_admin', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'responsable_entreprise', 'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique'].includes(role || '')) && (
+                                                {(['admin_etat', 'super_admin', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'responsable_entreprise'].includes(role || '')) && (
                                                     <Select
                                                         value={order.statut}
                                                         onValueChange={(val) => updateStatus(order.id, val)}
@@ -381,7 +375,7 @@ export default function OrdersPage() {
                     )}
                     <DialogFooter className="sm:justify-between">
                         <div className="flex-1">
-                            {selectedOrder?.statut === 'en_attente' && (['admin_etat', 'super_admin', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'responsable_entreprise', 'directeur_logistique', 'agent_logistique', 'responsable_depots', 'responsable_transport', 'operateur_logistique'].includes(role || '')) && (
+                            {selectedOrder?.statut === 'en_attente' && (['admin_etat', 'super_admin', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'responsable_entreprise'].includes(role || '')) && (
                                 <div className="flex gap-2">
                                     <Button
                                         variant="default"

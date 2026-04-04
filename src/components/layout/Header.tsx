@@ -11,8 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_LABELS } from '@/types/roles';
+import { useAuth, ROLE_LABELS } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTheme } from '@/components/ThemeProvider';

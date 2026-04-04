@@ -41,13 +41,6 @@ export default function ParametresPage() {
     rapports: false,
   });
 
-  const [securitySettings, setSecuritySettings] = useState({
-    ipWhitelisting: false,
-    concurrentSessions: true,
-    piiMasking: true,
-    activityAudit: true,
-  });
-
   const handleSavePrices = () => {
     toast({
       title: "Prix mis à jour",
@@ -366,67 +359,16 @@ export default function ParametresPage() {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-bold">Filtrage par Adresse IP (IP Whitelisting)</Label>
-                    <p className="text-xs text-muted-foreground">Restreindre l'accès aux dashboards SONAP aux adresses IP autorisées uniquement.</p>
-                  </div>
-                  <Switch 
-                    checked={securitySettings.ipWhitelisting} 
-                    onCheckedChange={(checked) => setSecuritySettings({...securitySettings, ipWhitelisting: checked})}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-bold">Limitation des Sessions Simultanées</Label>
-                    <p className="text-xs text-muted-foreground">Déconnecter automatiquement les sessions précédentes lors d'une nouvelle connexion.</p>
-                  </div>
-                  <Switch 
-                    checked={securitySettings.concurrentSessions} 
-                    onCheckedChange={(checked) => setSecuritySettings({...securitySettings, concurrentSessions: checked})}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-bold">Masquage des Données Sensibles (PII)</Label>
-                    <p className="text-xs text-muted-foreground">Masquer les emails et téléphones pour les rôles non-administratifs.</p>
-                  </div>
-                  <Switch 
-                    checked={securitySettings.piiMasking} 
-                    onCheckedChange={(checked) => setSecuritySettings({...securitySettings, piiMasking: checked})}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-bold">Audit d'Activité en Temps Réel</Label>
-                    <p className="text-xs text-muted-foreground">Enregistrer les tentatives de connexion et les changements de rôles dans le journal d'audit.</p>
-                  </div>
-                  <Switch 
-                    checked={securitySettings.activityAudit} 
-                    onCheckedChange={(checked) => setSecuritySettings({...securitySettings, activityAudit: checked})}
-                  />
-                </div>
-              </div>
-
               <Separator />
 
               <div className="flex items-center gap-4">
-                <Button onClick={() => {
-                  toast({
-                    title: "Paramètres de sécurité mis à jour",
-                    description: "Les modifications ont été appliquées avec succès.",
-                  });
-                }} className="gap-2">
-                  <Save className="h-4 w-4" />
-                  Sauvegarder la politique
-                </Button>
                 <Button variant="outline" className="gap-2">
                   <RefreshCw className="h-4 w-4" />
-                  Réinitialiser
+                  Synchroniser les données
+                </Button>
+                <Button variant="outline" className="gap-2">
+                  <Database className="h-4 w-4" />
+                  Exporter la configuration
                 </Button>
               </div>
             </CardContent>

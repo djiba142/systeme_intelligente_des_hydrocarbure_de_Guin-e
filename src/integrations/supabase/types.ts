@@ -459,9 +459,10 @@ export type Database = {
           id: string
           phone: string | null
           station_id: string | null
+          statut: 'inactif' | 'actif' | 'suspendu'
+          active_device_id: string | null
           updated_at: string
           user_id: string
-          last_session_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -472,9 +473,10 @@ export type Database = {
           id?: string
           phone?: string | null
           station_id?: string | null
+          statut?: 'inactif' | 'actif' | 'suspendu'
+          active_device_id?: string | null
           updated_at?: string
           user_id: string
-          last_session_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -485,9 +487,10 @@ export type Database = {
           id?: string
           phone?: string | null
           station_id?: string | null
+          statut?: 'inactif' | 'actif' | 'suspendu'
+          active_device_id?: string | null
           updated_at?: string
           user_id?: string
-          last_session_id?: string | null
         }
         Relationships: []
       }
@@ -632,47 +635,35 @@ export type Database = {
     }
     Enums: {
       app_role:
-        | "super_admin"
-        | "admin_etat"
-        | "directeur_general"
-        | "directeur_adjoint"
-        | "secretariat_direction"
-        | "directeur_aval"
-        | "directeur_adjoint_aval"
-        | "chef_division_distribution"
-        | "chef_service_aval"
-        | "agent_technique_aval"
-        | "controleur_distribution"
-        | "technicien_support_dsa"
-        | "technicien_flux"
-        | "inspecteur"
-        | "service_it"
-        | "directeur_juridique"
-        | "juriste"
-        | "charge_conformite"
-        | "assistant_juridique"
-        | "directeur_importation"
-        | "chef_service_importation"
-        | "agent_suivi_cargaison"
-        | "agent_reception_port"
-        | "analyste_approvisionnement"
-        | "directeur_administratif"
-        | "chef_service_administratif"
-        | "gestionnaire_documentaire"
-        | "directeur_logistique"
-        | "agent_logistique"
-        | "responsable_depots"
-        | "responsable_transport"
-        | "operateur_logistique"
-        | "technicien_aval"
-        | "agent_reception"
-        | "analyste"
-        | "responsable_entreprise"
-        | "gestionnaire_station"
-        | "superviseur_aval"
-        | "personnel_admin"
-        | "directeur_financier"
-        | "gestionnaire"
+      | "super_admin"
+      | "admin_etat"
+      | "directeur_general"
+      | "directeur_adjoint"
+      | "directeur_aval"
+      | "directeur_adjoint_aval"
+      | "chef_division_distribution"
+      | "chef_bureau_aval"
+      | "agent_supervision_aval"
+      | "controleur_distribution"
+      | "technicien_support_dsa"
+      | "technicien_flux"
+      | "inspecteur"
+      | "personnel_admin"
+      | "service_it"
+      | "responsable_entreprise"
+      | "directeur_administratif"
+      | "chef_service_administratif"
+      | "agent_administratif"
+      | "gestionnaire_documentaire"
+      | "responsable_stock"
+      | "agent_station"
+      | "technicien_aval"
+      | "directeur_importation"
+      | "agent_importation"
+      | "secretaire_general"
+      | "responsable_stations"
+      | "gestionnaire_livraisons"
+      | "operateur_entreprise"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -799,50 +790,26 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-        Enums: {
-          app_role: [
-            "super_admin",
-            "admin_etat",
-            "directeur_general",
-            "directeur_adjoint",
-            "secretariat_direction",
-            "directeur_aval",
-            "directeur_adjoint_aval",
-            "chef_division_distribution",
-            "chef_service_aval",
-            "agent_technique_aval",
-            "controleur_distribution",
-            "technicien_support_dsa",
-            "technicien_flux",
-            "inspecteur",
-            "service_it",
-            "directeur_juridique",
-            "juriste",
-            "charge_conformite",
-            "assistant_juridique",
-            "directeur_importation",
-            "chef_service_importation",
-            "agent_suivi_cargaison",
-            "agent_reception_port",
-            "analyste_approvisionnement",
-            "directeur_administratif",
-            "chef_service_administratif",
-            "gestionnaire_documentaire",
-            "directeur_logistique",
-            "agent_logistique",
-            "responsable_depots",
-            "responsable_transport",
-            "operateur_logistique",
-            "technicien_aval",
-            "agent_reception",
-            "analyste",
-            "responsable_entreprise",
-            "gestionnaire_station",
-            "superviseur_aval",
-            "personnel_admin",
-            "directeur_financier",
-            "gestionnaire",
-          ],
-        },
+    Enums: {
+      app_role: [
+        "super_admin",
+        "admin_etat",
+        "directeur_general",
+        "directeur_adjoint",
+        "directeur_aval",
+        "directeur_adjoint_aval",
+        "chef_division_distribution",
+        "chef_bureau_aval",
+        "agent_supervision_aval",
+        "controleur_distribution",
+        "technicien_support_dsa",
+        "technicien_flux",
+        "inspecteur",
+        "analyste",
+        "personnel_admin",
+        "service_it",
+        "responsable_entreprise",
+      ],
+    },
   },
 } as const

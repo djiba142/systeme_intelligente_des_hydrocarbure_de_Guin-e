@@ -113,10 +113,7 @@ export default function DossierDetailPage() {
 
     // Secrétaire Général — Prépare et vérifie avant le DG, puis transmet à l'État après avis DG
     if (st === 'valide_jur' && (role === 'secretariat_direction' || isSuper)) return { allow: true, roleContext: 'SG_PREP' };
-    
-    // Check if it was already transmitted
-    const hasBeenTransmitted = historique.some(h => h.action === 'SG_TRANSMIT');
-    if (st === 'avis_dg' && !hasBeenTransmitted && role === 'secretariat_direction') return { allow: true, roleContext: 'SG_TRANSMIT' };
+    if (st === 'avis_dg' && (role === 'secretariat_direction' || isSuper)) return { allow: true, roleContext: 'SG_TRANSMIT' };
 
     // DG / DGA (Avis stratégique — pas de validation finale)
     if (st === 'valide_jur' && (['directeur_general', 'directeur_adjoint'].includes(role) || isSuper)) return { allow: true, roleContext: 'DG' };
@@ -228,7 +225,7 @@ export default function DossierDetailPage() {
       await generateOfficialSONAPDocument({
         type: docType as any,
         numero: dossier.numero_dossier,
-        entite: dossier.entite_nom || dossier.entreprises?.nom || 'Entité SIHG',
+        entite: dossier.entreprises?.nom || 'Entité SIHG',
         adresse: dossier.entreprises?.adresse,
         region: dossier.entreprises?.region,
         signatureRole: 'Directeur Général',
@@ -299,10 +296,7 @@ export default function DossierDetailPage() {
                 </Badge>
                 <div className="text-xs font-mono font-bold text-slate-500">{dossier.numero_dossier}</div>
               </div>
-              <h3 className="font-black text-xl mb-1 text-slate-800">
-                {dossier.entite_nom || dossier.entreprises?.nom || 'Inconnu'} 
-                {dossier.entreprises?.sigle ? ` (${dossier.entreprises?.sigle})` : ''}
-              </h3>
+              <h3 className="font-black text-xl mb-1 text-slate-800">{dossier.entreprises?.nom || 'Inconnu'} ({dossier.entreprises?.sigle})</h3>
               <p className="text-sm font-medium text-slate-500 mb-6 flex items-center gap-1">
                 <FolderOpen className="h-4 w-4" /> Type : {dossier.type_dossier}
               </p>

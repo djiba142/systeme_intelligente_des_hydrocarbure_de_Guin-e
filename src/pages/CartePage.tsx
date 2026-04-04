@@ -145,7 +145,7 @@ export default function CartePage() {
       const { data: impData } = await (supabase as any)
         .from('importations')
         .select('*')
-        .in('statut', ['en_transit', 'arrive_conakry', 'valide_juridique', 'attente_paiement']);
+        .in('statut', ['en_transit', 'arrive_conakry', 'valide_juridique']);
       
       const shipsData = (impData || [])
           .filter((i: any) => i.statut === 'en_transit' || i.statut === 'arrive_conakry')

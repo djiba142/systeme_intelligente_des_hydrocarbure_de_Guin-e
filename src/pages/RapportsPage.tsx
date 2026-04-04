@@ -70,7 +70,7 @@ const reportTypes: ReportType[] = [
     icon: BarChart3,
     frequency: 'Quotidien',
     lastGenerated: 'En temps réel',
-    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_technique_aval', 'controleur_distribution']
+    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_supervision_aval', 'controleur_distribution']
   },
   {
     id: 'consommation-nationale',
@@ -79,16 +79,16 @@ const reportTypes: ReportType[] = [
     icon: TrendingUp,
     frequency: 'Hebdomadaire',
     lastGenerated: '08/03/2026',
-    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'directeur_administratif', 'directeur_juridique', 'juriste', 'charge_conformite', 'agent_technique_aval', 'inspecteur']
+    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'agent_supervision_aval', 'inspecteur']
   },
   {
     id: 'performance-entreprises',
     title: 'Performance Entreprises',
-    description: 'Classement et performance des sociétés pétrolières',
+    description: 'Classement et quotas des sociétés pétrolières',
     icon: BarChart3,
     frequency: 'Mensuel',
     lastGenerated: '01/03/2026',
-    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'directeur_administratif', 'chef_service_administratif', 'directeur_aval', 'directeur_adjoint_aval', 'analyste_regulation', 'inspecteur', 'directeur_juridique', 'juriste', 'charge_conformite']
+    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'inspecteur']
   },
   {
     id: 'prevision-penurie',
@@ -97,16 +97,16 @@ const reportTypes: ReportType[] = [
     icon: AlertCircle,
     frequency: 'Quotidien',
     lastGenerated: '09/03/2026',
-    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'analyste_regulation', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution']
+    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'analyste', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution']
   },
   {
     id: 'flux-aval',
     title: 'Flux Logistique Aval',
-    description: 'Suivi des ravitaillements secondaires et approvisionnements',
+    description: 'Suivi des ravitaillements secondaires et quotas DSA',
     icon: FileSpreadsheet,
     frequency: 'Quotidien',
     lastGenerated: 'En temps réel',
-    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretariat_direction', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_technique_aval', 'controleur_distribution', 'gestionnaire_livraisons']
+    roles: ['super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'secretaire_general', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_supervision_aval', 'controleur_distribution', 'gestionnaire_livraisons']
   },
   {
     id: 'stock-station',
@@ -115,7 +115,7 @@ const reportTypes: ReportType[] = [
     icon: BarChart3,
     frequency: 'Quotidien',
     lastGenerated: 'En temps réel',
-    roles: ['super_admin', 'secretariat_direction', 'responsable_entreprise', 'responsable_stations', 'gestionnaire_livraisons', 'operateur_entreprise', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_technique_aval', 'controleur_distribution']
+    roles: ['super_admin', 'secretaire_general', 'responsable_entreprise', 'responsable_stations', 'gestionnaire_livraisons', 'operateur_entreprise', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_supervision_aval', 'controleur_distribution']
   },
   {
     id: 'ventes-station',
@@ -124,7 +124,7 @@ const reportTypes: ReportType[] = [
     icon: TrendingUp,
     frequency: 'Quotidien',
     lastGenerated: 'En temps réel',
-    roles: ['super_admin', 'secretariat_direction', 'responsable_entreprise', 'responsable_stations', 'operateur_entreprise', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_technique_aval', 'controleur_distribution']
+    roles: ['super_admin', 'secretaire_general', 'responsable_entreprise', 'responsable_stations', 'operateur_entreprise', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_supervision_aval', 'controleur_distribution']
   },
   {
     id: 'livraisons-station',
@@ -133,7 +133,7 @@ const reportTypes: ReportType[] = [
     icon: FileSpreadsheet,
     frequency: 'Hebdomadaire',
     lastGenerated: '07/03/2026',
-    roles: ['super_admin', 'secretariat_direction', 'responsable_entreprise', 'gestionnaire_livraisons', 'operateur_entreprise', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_technique_aval', 'controleur_distribution']
+    roles: ['super_admin', 'secretaire_general', 'responsable_entreprise', 'gestionnaire_livraisons', 'operateur_entreprise', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution', 'agent_supervision_aval', 'controleur_distribution']
   },
   {
     id: 'inspections-terrain',
@@ -142,7 +142,7 @@ const reportTypes: ReportType[] = [
     icon: FileText,
     frequency: 'Hebdomadaire',
     lastGenerated: '09/03/2026',
-    roles: ['inspecteur', 'super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat', 'directeur_juridique', 'juriste', 'charge_conformite']
+    roles: ['inspecteur', 'super_admin', 'directeur_general', 'directeur_adjoint', 'admin_etat']
   },
   {
     id: 'conformite-prix',
@@ -151,7 +151,7 @@ const reportTypes: ReportType[] = [
     icon: AlertCircle,
     frequency: 'Hebdomadaire',
     lastGenerated: '09/03/2026',
-    roles: ['inspecteur', 'super_admin', 'directeur_general', 'directeur_juridique', 'charge_conformite']
+    roles: ['inspecteur', 'super_admin', 'directeur_general', 'admin_etat']
   },
   {
     id: 'sante-systeme',
@@ -161,7 +161,7 @@ const reportTypes: ReportType[] = [
     frequency: 'Quotidien',
     lastGenerated: 'En temps réel',
     roles: ['service_it', 'super_admin', 'directeur_general']
-  },
+  }
 ];
 
 

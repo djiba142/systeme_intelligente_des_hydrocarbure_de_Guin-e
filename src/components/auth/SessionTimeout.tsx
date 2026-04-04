@@ -21,9 +21,6 @@ export const SessionTimeout = () => {
       sessionStorage.setItem('redirectAfterLogin', currentPath);
     }
 
-    // CLEAR LAST ACTIVE TO PREVENT INFINITE LOCKOUT LOOP
-    localStorage.removeItem('sihg_last_active');
-
     await supabase.auth.signOut();
     toast({
       title: "Session expirée",
@@ -38,9 +35,6 @@ export const SessionTimeout = () => {
     if (warningRef.current) clearTimeout(warningRef.current);
 
     if (profile) {
-      // Save last activity to localStorage
-      localStorage.setItem('sihg_last_active', Date.now().toString());
-
       warningRef.current = setTimeout(() => {
         toast({
           title: "Alerte de sécurité",
@@ -53,50 +47,19 @@ export const SessionTimeout = () => {
   }, [profile, logout, toast]);
 
   useEffect(() => {
-    const events = ['mousedown', 'keydown', 'touchstart', 'mousemove', 'scroll', 'click'];
+    const events = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
     
     if (profile) {
-      // Check for existing activity on mount (prevents bypass via refresh)
-      const lastActive = localStorage.getItem('sihg_last_active');
-      if (lastActive) {
-        const elapsed = Date.now() - parseInt(lastActive, 10);
-        if (elapsed >= INACTIVITY_TIMEOUT) {
-          console.log('[SECURITY] Persistent timeout detected. Logging out.');
-          logout();
-          return;
-        }
-      }
-
       events.forEach(event => window.addEventListener(event, resetTimer));
-      
-      // Listen for activity in other tabs
-      const crossTabSync = (e: StorageEvent) => {
-        if (e.key === 'sihg_last_active' && e.newValue) {
-          if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          if (warningRef.current) clearTimeout(warningRef.current);
-          
-          const newLastActive = parseInt(e.newValue, 10);
-          const remaining = INACTIVITY_TIMEOUT - (Date.now() - newLastActive);
-          
-          if (remaining > 0) {
-            timeoutRef.current = setTimeout(logout, remaining);
-          } else {
-            logout();
-          }
-        }
-      };
-      window.addEventListener('storage', crossTabSync);
-      
       resetTimer();
-
-      return () => {
-        events.forEach(event => window.removeEventListener(event, resetTimer));
-        window.removeEventListener('storage', crossTabSync);
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        if (warningRef.current) clearTimeout(warningRef.current);
-      };
     }
-  }, [profile, resetTimer, logout]);
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (warningRef.current) clearTimeout(warningRef.current);
+    };
+  }, [profile, resetTimer]);
 
   return null;
 };

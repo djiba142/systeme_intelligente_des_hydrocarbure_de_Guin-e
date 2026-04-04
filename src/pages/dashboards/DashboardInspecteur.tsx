@@ -3,7 +3,7 @@ import {
     Shield, Eye, MapPin, AlertTriangle, Fuel, Building2,
     Search, Filter, Plus, FileText, BarChart3, RefreshCw,
     CheckCircle2, XCircle, Clock, ChevronDown, TrendingDown,
-    Activity, Gauge, AlertCircle, ClipboardList, DollarSign, ArrowLeft
+    Activity, Gauge, AlertCircle, ClipboardList, DollarSign
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -24,8 +24,6 @@ import { Station, StationType, StationStatus, ObservationType } from '@/types';
 import { REGIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { generateCustomReportPDF, generateNationalStockPDF } from '@/lib/pdfExport';
-import { InspectionForm } from '@/components/inspection/InspectionForm';
-import { History } from 'lucide-react';
 
 interface ObservationRow {
     id: string;
@@ -60,11 +58,8 @@ export default function DashboardInspecteur() {
     const [stations, setStations] = useState<Station[]>([]);
     const [entreprises, setEntreprises] = useState<EntrepriseBasic[]>([]);
     const [observations, setObservations] = useState<ObservationRow[]>([]);
-    const [missions, setMissions] = useState<any[]>([]);
-    const [rapports, setRapports] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('missions');
-    const [selectedMissionForInspection, setSelectedMissionForInspection] = useState<any | null>(null);
+    const [activeTab, setActiveTab] = useState('overview');
 
     // Filtres
     const [searchQuery, setSearchQuery] = useState('');
@@ -109,12 +104,10 @@ export default function DashboardInspecteur() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [stationsRes, entreprisesRes, obsRes, missionsRes, rapportsRes] = await Promise.all([
-                supabase.from('stations').select('*, entreprises(nom, sigle)'),
+            const [stationsRes, entreprisesRes, obsRes] = await Promise.all([
+                supabase.from('stations').select('*, entreprises:entreprise_id(nom, sigle)'),
                 supabase.from('entreprises').select('id, nom, sigle'),
-                supabase.from('observations' as any).select('*').order('date', { ascending: false }).limit(50),
-                (supabase as any).from('inspections_missions').select('*, station:stations(nom, code, ville, region)').order('date_prevue', { ascending: true }),
-                (supabase as any).from('inspections_rapports').select('*, station:stations(nom, code), inspecteur:profiles(full_name)').order('date_inspection', { ascending: false }).limit(20)
+                supabase.from('observations' as any).select('*').order('date', { ascending: false }).limit(50)
             ]);
 
             if (stationsRes.error) throw stationsRes.error;
@@ -161,9 +154,12 @@ export default function DashboardInspecteur() {
 
             setStations(mappedStations);
             setEntreprises(entreprisesRes.data || []);
-            setMissions(missionsRes.data || []);
-            setRapports(rapportsRes.data || []);
-            setObservations((obsRes.data as any) || []);
+            
+            if (!obsRes.error) {
+                let obsData = (obsRes as any)?.data || [];
+                // Filtering happens later in useMemo for more reactivity, but we initialize here
+                setObservations(obsData);
+            }
 
         } catch (error: any) {
             console.error('Error fetching inspector data:', error);
@@ -339,27 +335,8 @@ export default function DashboardInspecteur() {
     return (
         <DashboardLayout
             title="Dashboard Inspection"
+            subtitle={`Supervision stratégique du réseau national — ${inspecteurLevel.name}`}
         >
-            {selectedMissionForInspection ? (
-                <div className="animate-in fade-in duration-500">
-                    <Button 
-                        variant="ghost" 
-                        onClick={() => setSelectedMissionForInspection(null)}
-                        className="mb-6 hover:bg-slate-100 rounded-xl font-black uppercase text-[10px] tracking-widest gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" /> Retour au Dashboard
-                    </Button>
-                    <InspectionForm 
-                        mission={selectedMissionForInspection} 
-                        onComplete={() => {
-                            setSelectedMissionForInspection(null);
-                            fetchData();
-                        }}
-                        onCancel={() => setSelectedMissionForInspection(null)}
-                    />
-                </div>
-            ) : (
-                <>
             {/* Header Actions */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-4">
@@ -631,7 +608,6 @@ export default function DashboardInspecteur() {
                     >
                         <RefreshCw className={cn("h-4 w-4 text-slate-600", loading && "animate-spin")} />
                     </Button>
-                {(role === 'super_admin' || role === 'directeur_general' || role === 'admin_etat') && (
                     <Button 
                         className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 font-black text-xs uppercase tracking-widest gap-2"
                         onClick={() => {
@@ -668,7 +644,6 @@ export default function DashboardInspecteur() {
                         <FileText className="h-4 w-4" />
                         Générer Rapport National
                     </Button>
-                )}
                 </div>
             </div>
 
@@ -676,141 +651,10 @@ export default function DashboardInspecteur() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="bg-white p-1 rounded-2xl border border-slate-200 shadow-sm self-start inline-flex h-12">
                     <TabsTrigger value="overview" className="rounded-xl px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider">Vue d'ensemble</TabsTrigger>
-                    <TabsTrigger value="missions" className="rounded-xl px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider">Mes Missions</TabsTrigger>
                     <TabsTrigger value="stations" className="rounded-xl px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider">Parc Stations</TabsTrigger>
                     <TabsTrigger value="observations" className="rounded-xl px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider">Registre Terrain</TabsTrigger>
+                    <TabsTrigger value="comparatif" className="rounded-xl px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider">Compagnie / Zone</TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="missions" className="space-y-6 pt-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-6">
-                            <Card className="border-none shadow-sm overflow-hidden rounded-[2.5rem]">
-                                <CardHeader className="bg-white border-b border-slate-50 flex flex-row items-center justify-between p-8">
-                                    <div>
-                                        <CardTitle className="text-xl font-black uppercase text-slate-800 flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                                <ClipboardList className="h-6 w-6 text-blue-600" />
-                                            </div>
-                                            Missions Assignées
-                                        </CardTitle>
-                                        <CardDescription className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Planification des contrôles de terrain</CardDescription>
-                                    </div>
-                                    <Badge className="bg-blue-100 text-blue-700 border-none font-black px-4 py-1.5 rounded-full">{missions.length} MISSIONS</Badge>
-                                </CardHeader>
-                                <CardContent className="p-0">
-                                    <div className="divide-y divide-slate-100">
-                                        {missions.length === 0 ? (
-                                            <div className="py-24 text-center">
-                                                <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-slate-200">
-                                                    <Clock className="h-10 w-10 text-slate-300" />
-                                                </div>
-                                                <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Aucune mission assignée pour le moment</p>
-                                            </div>
-                                        ) : (
-                                            missions.map((m) => (
-                                                <div key={m.id} className="p-8 hover:bg-slate-50/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group">
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="h-16 w-16 rounded-[1.25rem] bg-slate-50 flex flex-col items-center justify-center border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-all duration-300">
-                                                            <MapPin className="h-8 w-8 text-blue-600 group-hover:text-white mb-1" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-black text-slate-900 uppercase text-lg leading-none mb-2 group-hover:text-blue-700 transition-colors">{m.station?.nom}</p>
-                                                            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                                                                <span className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md"><Building2 className="h-3 w-3" /> {m.station?.ville}</span>
-                                                                <span className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">{m.numero_mission}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-8">
-                                                        <div className="text-right hidden sm:block">
-                                                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Date Prévue</p>
-                                                            <p className="text-sm font-black text-slate-700">{new Date(m.date_prevue).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                                                        </div>
-                                                        <div className="flex flex-col items-center gap-2">
-                                                            <Badge className={cn(
-                                                                "font-black text-[9px] border-none uppercase py-1 px-4 rounded-full",
-                                                                m.statut === 'assignee' ? "bg-blue-100 text-blue-700" :
-                                                                m.statut === 'en_cours' ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-                                                            )}>
-                                                                {m.statut.replace(/_/g, ' ')}
-                                                            </Badge>
-                                                        </div>
-                                                        <Button 
-                                                            className="h-12 px-8 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-blue-600 shadow-xl shadow-slate-900/10 hover:shadow-blue-600/20 transition-all active:scale-95 group-hover:translate-x-1"
-                                                            onClick={() => setSelectedMissionForInspection(m)}
-                                                        >
-                                                            Démarrer
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </CardContent>
-                                <CardFooter className="bg-slate-50/50 p-6 border-t border-slate-100 block">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center italic">Important : Les missions expirées doivent être signalées au superviseur régional</p>
-                                </CardFooter>
-                            </Card>
-                        </div>
-                        
-                        <div className="space-y-6">
-                            <Card className="border-none shadow-xl overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-indigo-50 to-blue-50/30 border border-indigo-100/50">
-                                <CardHeader className="p-8 pb-4">
-                                    <div className="h-12 w-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
-                                        <Clock className="h-6 w-6 text-indigo-600" />
-                                    </div>
-                                    <CardTitle className="text-base font-black uppercase text-indigo-900 flex items-center gap-2 tracking-tight">
-                                        Flux de Rapports
-                                    </CardTitle>
-                                    <CardDescription className="text-[10px] font-bold uppercase text-indigo-400">Historique des soumissions récentes</CardDescription>
-                                </CardHeader>
-                                <CardContent className="px-8 pb-8 space-y-4">
-                                    {rapports.map((r) => (
-                                        <div key={r.id} className="group/rep p-5 rounded-3xl bg-white border border-indigo-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <p className="text-[11px] font-black text-slate-900 uppercase tracking-tighter mb-0.5">{r.station?.nom}</p>
-                                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{new Date(r.date_inspection).toLocaleDateString('fr-FR')}</p>
-                                                </div>
-                                                <Badge className={cn(
-                                                    "text-[8px] font-black border-none px-2 rounded-md", 
-                                                    r.est_conforme ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-                                                )}>
-                                                    {r.est_conforme ? 'OK' : 'ALERTE'}
-                                                </Badge>
-                                            </div>
-                                            <p className="text-[10px] text-slate-500 line-clamp-2 mb-4 leading-relaxed font-medium italic">"{r.observations || 'Aucune observation textuelle renseignée.'}"</p>
-                                            <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="h-5 w-5 rounded-full bg-slate-100 border border-slate-200" />
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase">{r.inspecteur?.full_name?.split(' ')[0]}</span>
-                                                </div>
-                                                <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase p-0 group-hover/rep:translate-x-1 transition-transform">
-                                                    PDF <FileText className="h-3 w-3 ml-1" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {rapports.length === 0 && (
-                                        <div className="py-16 text-center opacity-30">
-                                            <ClipboardList className="h-12 w-12 mx-auto mb-2 text-indigo-200" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Aucun rapport soumis</p>
-                                        </div>
-                                    )}
-                                </CardContent>
-                                <CardFooter className="p-8 pt-0">
-                                    <Button 
-                                        variant="ghost" 
-                                        className="w-full text-[10px] font-black uppercase text-indigo-600 tracking-widest hover:bg-white/50 rounded-2xl h-12"
-                                        onClick={() => window.location.href = '/inspections'}
-                                    >
-                                        Voir le Registre Complet
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        </div>
-                    </div>
-                </TabsContent>
 
                 {/* TAB: Vue d'ensemble */}
                 <TabsContent value="overview" className="space-y-6">
@@ -1460,9 +1304,6 @@ export default function DashboardInspecteur() {
                   Document Numérique - Certifié par la Présidence de la République de Guinée
                </p>
             </div>
-                    {/* ... rest of the content ... */}
-                </>
-            )}
         </DashboardLayout>
     );
 }

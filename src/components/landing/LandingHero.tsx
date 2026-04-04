@@ -54,12 +54,12 @@ export const LandingHero = () => {
                         Intelligence Pétrolière
                     </div>
 
-                    <h1 className="text-4xl md:text-7xl font-black text-white leading-tight tracking-tight">
+                    <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight">
                         Un secteur <span className="text-[#f97316]">numérique</span>,
                         <br />transparent et sécurisé.
                     </h1>
 
-                    <p className="text-base md:text-xl text-white/70 max-w-2xl mx-auto font-medium leading-relaxed">
+                    <p className="text-sm md:text-base text-white/70 max-w-xl mx-auto font-medium">
                         Système intégré de surveillance en temps réel pour une gestion transparente des hydrocarbures en Guinée.
                     </p>
 

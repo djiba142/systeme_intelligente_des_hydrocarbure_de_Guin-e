@@ -102,7 +102,6 @@ export function OrdreRavitaillementDialog({ open, onOpenChange, onSuccess }: Ord
     try {
       const { error } = await supabase.from('ordres_livraison').insert({
         station_id: values.stationId,
-        entreprise_id: values.entrepriseId,
         carburant: values.carburant,
         quantite_demandee: values.volume,
         priorite: values.urgence,

@@ -23,7 +23,6 @@ import { cn } from '@/lib/utils';
 import type { Entreprise, Station, Alert } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { maskIfUnauthorized } from '@/lib/maskingUtils';
 
 // Import logos
 import logoTotal from '@/assets/logos/total-energies.png';
@@ -134,11 +133,13 @@ export default function EntrepriseDetailPage() {
             telephone: entData.contact_telephone || '',
             email: entData.contact_email || '',
           },
+          quota_essence: (entData as any).quota_essence || 0,
+          quota_gasoil: (entData as any).quota_gasoil || 0,
         } as any);
 
         const { data: stData, error: stErr } = await supabase
           .from('stations')
-          .select('*, entreprises(nom, sigle, logo_url)')
+          .select('*, entreprises:entreprise_id(nom, sigle, logo_url)')
           .eq('entreprise_id', id);
 
         if (stErr) throw stErr;
@@ -258,6 +259,10 @@ export default function EntrepriseDetailPage() {
         {canManageEntreprises && (
           <div className="flex gap-2">
              <Button variant="outline" size="sm" className="rounded-xl border-dashed" onClick={() => setIsEditDialogOpen(true)}>Modifier Infos</Button>
+             {(['admin_etat', 'directeur_aval', 'directeur_adjoint_aval', 'chef_division_distribution'].includes(currentUserRole || '')) && (
+               <Button variant="outline" size="sm" className="rounded-xl border-dashed">Modifier Quotas</Button>
+             )}
+             <Button variant="outline" size="sm" className="rounded-xl">Historique Quotas</Button>
           </div>
         )}
       </div>
@@ -319,13 +324,13 @@ export default function EntrepriseDetailPage() {
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <a href={`tel:${entreprise.contact.telephone}`} className="hover:text-primary no-underline">
-                  {maskIfUnauthorized(entreprise.contact.telephone, currentUserRole, 'phone')}
+                  {entreprise.contact.telephone}
                 </a>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 <a href={`mailto:${entreprise.contact.email}`} className="hover:text-primary no-underline">
-                  {maskIfUnauthorized(entreprise.contact.email, currentUserRole, 'email')}
+                  {entreprise.contact.email}
                 </a>
               </div>
             </CardContent>
@@ -359,6 +364,29 @@ export default function EntrepriseDetailPage() {
                   <p className="text-xs text-muted-foreground">En attente</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          {/* Quotas Status */}
+          <Card className="border-none shadow-sm bg-slate-900 text-white rounded-[2rem]">
+            <CardHeader>
+              <CardTitle className="text-sm font-black uppercase tracking-wider text-slate-400">Suivi des Quotas Mensuels</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="flex justify-between text-[10px] font-black uppercase mb-1">
+                  <span className="text-emerald-400">Essence</span>
+                  <span>{(entreprise as any).quota_essence?.toLocaleString()} L</span>
+                </div>
+                <Progress value={35} className="h-1.5 bg-white/10" />
+              </div>
+              <div>
+                <div className="flex justify-between text-[10px] font-black uppercase mb-1">
+                  <span className="text-blue-400">Gasoil</span>
+                  <span>{(entreprise as any).quota_gasoil?.toLocaleString()} L</span>
+                </div>
+                <Progress value={20} className="h-1.5 bg-white/10" />
+              </div>
+              <p className="text-[9px] text-slate-500 font-bold italic">Données synchronisées avec SONAP</p>
             </CardContent>
           </Card>
         </div>

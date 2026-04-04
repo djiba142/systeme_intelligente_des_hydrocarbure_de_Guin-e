@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
-import { Fuel, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldAlert, ArrowLeft, CheckCircle2, Loader2, Shield } from 'lucide-react';
+import { Fuel, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldAlert, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
@@ -30,7 +29,9 @@ export default function AuthPage() {
     hasRole, 
     loading: authLoading,
     getDashboardRoute,
-    signOut
+    mfaSetupRequired,
+    mfaVerificationRequired,
+    refreshMfaStatus
   } = useAuth();
   const { toast } = useToast();
 
@@ -44,11 +45,17 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Auth view state
-  const [view, setView] = useState<'login' | 'forgot' | 'reset'>('login');
+  const [view, setView] = useState<'login' | 'forgot' | 'reset' | 'mfa-setup' | 'mfa-challenge'>('login');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
+  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
 
   const [searchParams] = useSearchParams();
   const reason = searchParams.get('reason');
+  const errorParam = searchParams.get('error');
 
   const getEffectiveRedirect = () => {
     const savedRedirect = sessionStorage.getItem('redirectAfterLogin');
@@ -61,16 +68,81 @@ export default function AuthPage() {
 
   useEffect(() => {
     // Redirection automatique si déjà connecté
-    if (user && !authLoading && view === 'login') {
+    if (user && !authLoading) {
       if (hasProfile && hasRole) {
-        const route = getEffectiveRedirect();
-        console.log('Utilisateur authentifié, redirection vers:', route);
-        navigate(route);
+        if (mfaSetupRequired) {
+          if (view !== 'mfa-setup') setView('mfa-setup');
+        } else if (mfaVerificationRequired) {
+          if (view !== 'mfa-challenge') setView('mfa-challenge');
+        } else {
+          const route = getEffectiveRedirect();
+          console.log('Utilisateur authentifié, redirection vers:', route);
+          navigate(route);
+        }
       } else {
         console.log('Utilisateur connecté mais sans profil/rôle complet.');
       }
     }
-  }, [user, hasProfile, hasRole, authLoading, navigate, view]);
+  }, [user, hasProfile, hasRole, authLoading, navigate, mfaSetupRequired, mfaVerificationRequired, view]);
+
+  // Handle MFA Enroll Generation
+  useEffect(() => {
+    if (view === 'mfa-setup' && !factorId) {
+      const enroll = async () => {
+        setLoading(true);
+        
+        // Nettoyage des facteurs non vérifiés (éviter l'erreur 422 au refresh)
+        try {
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          if (factors && factors.all) {
+            const unverified = factors.all.filter((f: any) => f.status === 'unverified' && f.factor_type === 'totp');
+            for (const f of unverified) {
+              await supabase.auth.mfa.unenroll({ factorId: f.id });
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to cleanup unverified factors', err);
+        }
+
+        const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+        if (error) {
+          toast({ variant: 'destructive', title: 'Erreur MFA', description: error.message });
+        } else if (data) {
+          setFactorId(data.id);
+          setMfaQrCode(data.totp.qr_code);
+          setMfaSecret(data.totp.secret);
+        }
+        setLoading(false);
+      };
+      enroll();
+    }
+  }, [view, factorId, toast]);
+
+  // Handle MFA Challenge Generation
+  useEffect(() => {
+    if (view === 'mfa-challenge' && !factorId) {
+      const getFactor = async () => {
+        setLoading(true);
+        const { data, error } = await supabase.auth.mfa.listFactors();
+        if (error) {
+          toast({ variant: 'destructive', title: 'Erreur MFA', description: error.message });
+        } else if (data) {
+          const totpFactor = data.all.find((f: any) => f.factor_type === 'totp' && f.status === 'verified');
+          if (totpFactor) {
+            setFactorId(totpFactor.id);
+            const challengeResponse = await supabase.auth.mfa.challenge({ factorId: totpFactor.id });
+            if (challengeResponse.error) {
+              toast({ variant: 'destructive', title: 'Erreur', description: challengeResponse.error.message });
+            } else if (challengeResponse.data) {
+              setChallengeId(challengeResponse.data.id);
+            }
+          }
+        }
+        setLoading(false);
+      };
+      getFactor();
+    }
+  }, [view, factorId, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,160 +203,103 @@ export default function AuthPage() {
     }
   };
 
-  // --- CAS : CONNECTÉ SANS RÔLE OU SANS PROFIL (Accès bloqué / en attente) ---
-  // We no longer auto-logout. Instead we show a persistent message.
-  const isUnauthorized = user && !authLoading && (!hasProfile || !hasRole);
-
-  if (isUnauthorized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <Card className="max-w-md w-full border-amber-200 bg-amber-50/30 overflow-hidden shadow-xl">
-          <div className="h-1 bg-amber-400 w-full" />
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 mb-4 rotate-3 shadow-inner">
-              <Shield className="h-8 w-8" />
-            </div>
-            <CardTitle className="text-xl font-black text-amber-900 tracking-tight">Accès en attente</CardTitle>
-            <CardDescription className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600/70 mt-1">
-              Vérification de sécurité en cours
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6 text-center pt-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-amber-900/80">
-                Bonjour, votre compte est bien authentifié.
-              </p>
-              <p className="text-xs leading-relaxed text-amber-800/60 mb-4">
-                Cependant, votre profil ou votre rôle ({user.email}) est introuvable dans la base de données.
-              </p>
-              <div className="p-3 bg-amber-100/50 rounded-lg border border-amber-200">
-                <p className="text-xs font-bold text-amber-900 mb-1">🛠️ Action Requise (Si vous êtes l'Administrateur) :</p>
-                <p className="text-[11px] text-amber-800/80">
-                  Si vous venez de créer ce compte ou de changer de base de données, vous devez <b>exécuter le script SQL "Master Schema" (20260322050000)</b> dans Supabase pour que votre compte reçoive les droits <i>super_admin</i>.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-white/60 rounded-xl border border-amber-200/50 shadow-sm transition-all hover:shadow-md group">
-              <p className="text-[10px] font-bold text-amber-800/40 uppercase tracking-widest mb-1 text-left">Votre Identifiant Unique</p>
-              <code className="text-[11px] font-mono text-amber-900 break-all select-all flex items-center justify-between">
-                {user.id}
-              </code>
-            </div>
-
-            <div className="flex flex-col gap-3 pt-2">
-              {user.email === 'admin@nexus.com' && (
-                <Button 
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold h-11 shadow-md shadow-amber-600/20"
-                  onClick={async () => {
-                    try {
-                      // Insert missing profile
-                      const { error: pErr } = await supabase.from('profiles').insert([{
-                         user_id: user.id,
-                         email: 'admin@nexus.com',
-                         full_name: 'Super Administrateur',
-                         organisation: 'Direction Générale',
-                         poste: 'Directeur Général'
-                      }]);
-                      if (pErr) console.error('Erreur Profile:', pErr);
-                      
-                      const { error: rErr } = await supabase.from('user_roles').insert([{
-                         user_id: user.id,
-                         role: 'super_admin'
-                      }]);
-                      if (rErr) console.error('Erreur Role:', rErr);
-
-                      if (pErr || rErr) {
-                         toast({
-                            variant: "destructive",
-                            title: "Tentative effectuée avec erreurs",
-                            description: "Certaines données existaient déjà. Rechargement du profil...",
-                         });
-                      } else {
-                         toast({
-                            title: "Réparation réussie",
-                            description: "Compte super_admin configuré. Vous allez être redirigé.",
-                         });
-                      }
-                      setTimeout(() => window.location.reload(), 2000);
-                    } catch (e: any) {
-                      toast({
-                        variant: "destructive",
-                        title: "Erreur critique",
-                        description: e.message,
-                      });
-                    }
-                  }}
-                >
-                  🚀 FORCER LA RÉPARATION DU COMPTE ADMIN
-                </Button>
-              )}
-              <Button 
-                variant="outline" 
-                className="w-full border-amber-200 text-amber-700 hover:bg-amber-100 hover:text-amber-800 font-bold h-11"
-                onClick={() => signOut()}
-              >
-                Changer de compte
-              </Button>
-              <p className="text-[10px] text-amber-700/50 italic">
-                Email : {user.email}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Global loader while checking or when waiting for redirection
-  if (user && (authLoading || (hasProfile && hasRole && view === 'login'))) {
-    const targetRoute = getEffectiveRedirect();
+  const handleVerifySetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!factorId) return;
+    setLoading(true);
     
+    const challengeRes = await supabase.auth.mfa.challenge({ factorId });
+    if (challengeRes.error) {
+       toast({ variant: 'destructive', title: 'Erreur', description: challengeRes.error.message });
+       setLoading(false);
+       return;
+    }
+    
+    const verifyRes = await supabase.auth.mfa.verify({
+      factorId,
+      challengeId: challengeRes.data.id,
+      code: mfaCode
+    });
+    
+    if (verifyRes.error) {
+       toast({ variant: 'destructive', title: 'Code Invalide', description: verifyRes.error.message });
+    } else {
+       toast({ title: 'MFA Activé', description: 'La double authentification est bien configurée.' });
+       await refreshMfaStatus();
+    }
+    setLoading(false);
+  };
+
+  const handleVerifyChallenge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!factorId || !challengeId) return;
+    setLoading(true);
+    
+    const verifyRes = await supabase.auth.mfa.verify({
+      factorId,
+      challengeId,
+      code: mfaCode
+    });
+    
+    if (verifyRes.error) {
+       toast({ variant: 'destructive', title: 'Code Invalide', description: verifyRes.error.message });
+       const newChallenge = await supabase.auth.mfa.challenge({ factorId });
+       if (newChallenge.data) setChallengeId(newChallenge.data.id);
+    } else {
+       await refreshMfaStatus();
+    }
+    setLoading(false);
+  };
+
+  // Only show "unauthorized" AFTER auth is fully loaded AND a grace period has passed
+  // This prevents race conditions where profile/role aren't loaded yet
+  const isUnauthorized = user && !authLoading && dataCheckReady && (!hasProfile || !hasRole);
+
+  // After auth finishes loading, wait a grace period before checking unauthorized status
+  // This gives fetchUserData enough time to complete
+  useEffect(() => {
+    if (user && !authLoading && (!hasProfile || !hasRole)) {
+      const timer = setTimeout(() => {
+        setDataCheckReady(true);
+      }, 3000); // 3 second grace period
+      return () => clearTimeout(timer);
+    } else {
+      setDataCheckReady(false);
+    }
+  }, [user, authLoading, hasProfile, hasRole]);
+
+  // Auto sign-out users not in the database - no "accès restreint" page shown
+  useEffect(() => {
+    if (isUnauthorized) {
+      const handleUnauthorized = async () => {
+        const unauthorizedEmail = user?.email;
+        console.error(`Accès refusé pour ${unauthorizedEmail}: profil=${hasProfile}, rôle=${hasRole}`);
+        await supabase.auth.signOut();
+        toast({
+          title: 'Accès refusé',
+          description: `Le compte "${unauthorizedEmail}" n'est pas autorisé. Vérifiez que le profil et le rôle existent dans la base de données.`,
+          variant: 'destructive',
+        });
+      };
+      handleUnauthorized();
+    }
+  }, [isUnauthorized, user, hasProfile, hasRole, toast]);
+
+  if (user && (authLoading || (hasProfile && hasRole && view !== 'reset' && view !== 'mfa-setup' && view !== 'mfa-challenge'))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-8 max-w-sm text-center px-4">
+        <div className="flex flex-col items-center gap-6">
           <div className="flex items-center gap-4 animate-in zoom-in-95 duration-500">
             <img src={logo} alt="SIHG" className="h-16 w-16 drop-shadow-lg" />
             <div className="h-10 w-[1px] bg-border" />
             <img src={sonapLogo} alt="SONAP" className="h-12 w-12 drop-shadow-lg" />
           </div>
-          
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-10 w-10 animate-spin text-primary opacity-80" />
-            <div className="space-y-2">
-              <p className="text-sm font-bold text-slate-600 uppercase tracking-widest animate-pulse">
-                Sécurisation de la session...
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {!hasProfile ? "Vérification du profil..." : !hasRole ? "Attribution du rôle..." : "Préparation du tableau de bord..."}
-              </p>
-            </div>
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+              Sécurisation de la session...
+            </p>
           </div>
-
-          {!authLoading && hasProfile && hasRole && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
-              <Button 
-                onClick={() => navigate(targetRoute)}
-                className="mt-4 gap-2 bg-primary hover:bg-primary/90 text-white shadow-md animate-pulse"
-              >
-                Accéder maintenant <ArrowRight className="h-4 w-4" />
-              </Button>
-              <p className="text-[10px] text-muted-foreground mt-4 italic">
-                Cliquez si la redirection automatique ne se lance pas.
-              </p>
-            </div>
-          )}
-
-          {!authLoading && (!hasProfile || !hasRole) && (
-            <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-100 text-left">
-              <p className="text-xs font-semibold text-amber-800 mb-2">🚀 Problème de connexion ?</p>
-              <ul className="text-[10px] text-amber-700 space-y-1 list-disc pl-4">
-                <li>Assurez-vous d'avoir exécuté le script SQL <b>20260322050000_master_unified_schema.sql</b>.</li>
-                <li>Désactivez <b>Email Confirmation</b> dans Supabase (Auth {"->"} Settings).</li>
-                <li>Videz le cache ou essayez en navigation privée.</li>
-              </ul>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -311,6 +326,8 @@ export default function AuthPage() {
               {view === 'login' && 'Connexion'}
               {view === 'forgot' && 'Mot de passe oublié'}
               {view === 'reset' && 'Réinitialisation'}
+              {view === 'mfa-setup' && 'Sécurité Requise'}
+              {view === 'mfa-challenge' && 'Authentification MFA'}
             </h1>
             {reason === 'expired' && (
               <div className="mt-4 p-3 rounded-xl bg-orange-50 border border-orange-200 flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
@@ -320,11 +337,86 @@ export default function AuthPage() {
                 </p>
               </div>
             )}
+            {errorParam === 'session_conflict' && (
+              <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
+                <ShieldAlert className="h-5 w-5 text-red-600 shrink-0" />
+                <p className="text-xs text-red-800 font-medium text-left">
+                  Déconnexion de sécurité : Ce compte vient d'être connecté sur un autre appareil.
+                </p>
+              </div>
+            )}
+            {(view === 'mfa-setup' || view === 'mfa-challenge') && (
+              <p className="text-sm text-slate-500 mt-2">
+                Votre rôle autorise l'accès à des données critiques.
+              </p>
+            )}
           </div>
 
           {!isUnauthorized && !isSuccess ? (
             <>
-              {view === 'login' ? (
+              {view === 'mfa-setup' ? (
+                <form onSubmit={handleVerifySetup} className="space-y-6">
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-sm text-slate-700 text-center mb-4 font-medium">
+                      1. Scannez ce QR Code avec Google Authenticator ou Authy.
+                    </p>
+                    {mfaQrCode ? (
+                      <div className="flex justify-center bg-white p-2 rounded-xl border border-slate-200 mb-4 overflow-hidden">
+                        <img src={mfaQrCode} alt="MFA QR Code" className="h-48 w-48 object-contain" />
+                      </div>
+                    ) : (
+                      <div className="h-48 w-48 flex justify-center items-center bg-slate-100 rounded-xl mx-auto mb-4 animate-pulse" />
+                    )}
+                    {mfaSecret && (
+                      <div className="text-center text-xs text-slate-500 mb-4">
+                        Code manuel : <span className="font-mono tracking-wider text-slate-800 font-bold">{mfaSecret}</span>
+                      </div>
+                    )}
+                    <p className="text-sm text-slate-700 text-center font-medium mt-6 mb-2">
+                      2. Saisissez le code à 6 chiffres généré.
+                    </p>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      className="text-center tracking-[1em] font-mono text-lg h-12"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading || mfaCode.length < 6}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Activer et Continuer'}
+                  </Button>
+                </form>
+
+              ) : view === 'mfa-challenge' ? (
+                <form onSubmit={handleVerifyChallenge} className="space-y-6">
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 text-center">
+                    <Lock className="h-10 w-10 text-emerald-600 mx-auto mb-4" />
+                    <p className="text-sm text-slate-700 mb-6 font-medium">
+                      Ouvrez votre application d'authentification et saisissez le code temporaire pour confirmer votre identité.
+                    </p>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      className="text-center tracking-[1em] font-mono text-xl h-14"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 h-12" disabled={loading || mfaCode.length < 6}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Vérifier l\'identité'}
+                  </Button>
+                </form>
+
+              ) : view === 'login' ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>

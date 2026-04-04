@@ -85,24 +85,8 @@ export default function InspectionsPage() {
     description: '',
   });
 
-  const inspecteurLevel = useMemo(() => {
-    const isNational = role === 'super_admin' || 
-                      role === 'directeur_general' || 
-                      role === 'admin_etat' || 
-                      (profile?.poste?.toLowerCase().includes('national'));
-    return {
-      isNational,
-      region: profile?.region,
-      restrict: !isNational && !!profile?.region
-    };
-  }, [role, profile]);
-
   const fetchStations = async () => {
-    let query = supabase.from('stations').select('id, nom, region, ville');
-    if (inspecteurLevel.restrict && inspecteurLevel.region) {
-        query = query.eq('region', inspecteurLevel.region);
-    }
-    const { data } = await query;
+    const { data } = await supabase.from('stations').select('id, nom, region, ville');
     setStations(data || []);
   };
 
@@ -110,13 +94,10 @@ export default function InspectionsPage() {
     setLoading(true);
     try {
       // Re-fetch inspections with a more resilient query
-         let query = (supabase as any).from('observations').select('*');
-         
-         if (inspecteurLevel.restrict && inspecteurLevel.region) {
-             query = query.eq('region', inspecteurLevel.region);
-         }
-
-         const { data, error } = await query.order('created_at', { ascending: false });
+        const { data, error } = await (supabase as any)
+        .from('observations')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) {
            console.warn('Observations fetch error:', error);
@@ -200,6 +181,43 @@ export default function InspectionsPage() {
     }
   };
 
+  const testLiaison = async () => {
+    setLoading(true);
+    try {
+      const { error } = await (supabase as any).from('observations').insert({
+        station_id: 'test',
+        station_nom: 'Test System',
+        inspecteur_id: user?.id,
+        type: 'autre',
+        description: 'Test de liaison système @ ' + new Date().toISOString(),
+        date: new Date().toISOString(),
+        statut: 'traitee',
+        region: 'Conakry',
+      });
+      
+      if (error) {
+           toast({
+             title: "Échec du test",
+             description: "La table 'observations' n'existe probablement pas encore.",
+             variant: "destructive"
+           });
+      } else {
+           toast({
+             title: "Liaison établie",
+             description: "Le système est prêt à recevoir les rapports d'inspection.",
+           });
+           fetchInspections();
+      }
+    } catch (err) {
+      toast({
+        title: "Erreur critique",
+        description: "Impossible d'accéder à la base de données.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredInspections = inspections.filter(ins => {
     const sNom = ins.station_nom || "";
@@ -251,17 +269,15 @@ export default function InspectionsPage() {
               />
             </div>
             
-                {!inspecteurLevel.restrict && (
-                  <Select value={filterRegion} onValueChange={setFilterRegion}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Région" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes régions</SelectItem>
-                      {REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                )}
+            <Select value={filterRegion} onValueChange={setFilterRegion}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Région" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes régions</SelectItem>
+                {REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-[150px]">
@@ -275,6 +291,12 @@ export default function InspectionsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {canAddObservation && (
+              <Button variant="outline" size="sm" onClick={testLiaison} disabled={loading} className="gap-2 border-primary/20 hover:border-primary/50 text-xs font-bold">
+                 {loading ? <RefreshCw className="h-3 w-3 animate-spin"/> : <Shield className="h-3 w-3 text-primary"/>}
+                 Tester Liaison
+              </Button>
+            )}
 
             <Button variant="outline" size="sm" onClick={fetchInspections} disabled={loading}>
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />

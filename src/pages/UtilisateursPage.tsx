@@ -35,13 +35,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_LABELS, ROLE_DESCRIPTIONS, AppRole } from '@/types/roles';
+import { ROLE_LABELS, ROLE_DESCRIPTIONS, AppRole, useAuth } from '@/contexts/AuthContext';
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { maskIfUnauthorized } from '@/lib/maskingUtils';
+
+// Utility for Data Masking
+const maskEmail = (email: string) => {
+  if (!email || !email.includes('@')) return email;
+  const [local, domain] = email.split('@');
+  if (local.length <= 2) return `${local}***@${domain}`;
+  return `${local.substring(0, 2)}***${local.slice(-1)}@${domain}`;
+};
 
 interface UserWithDetails {
   id: string;
@@ -52,6 +58,10 @@ interface UserWithDetails {
   phone?: string;
   created_at: string;
   role?: AppRole;
+  entreprise_id?: string;
+  entreprise_nom?: string;
+  station_id?: string;
+  station_nom?: string;
   organisation?: string;
   direction?: string;
   poste?: string;
@@ -62,65 +72,44 @@ interface UserWithDetails {
   prefecture?: string;
   commune?: string;
   force_password_change?: boolean;
+  statut?: 'inactif' | 'actif' | 'suspendu';
 }
 
 const ORG_LABELS: Record<string, string> = {
-  direction_generale: 'Direction Générale',
-  analyse: 'Régulation & Quotas (Admin Central)',
-  dsi: 'Service Informatique (DSI)',
-  dsa: 'Direction des Services Aval (DSA)',
-  inspecteurs: 'Corps National des Inspecteurs',
-  importation: 'Direction Importation & Approvisionnement',
-  juridique: 'Direction Juridique & Conformité (DJ/C)',
-  administratif: 'Direction Administrative (DA)',
-  logistique: 'Direction Logistique',
+  admin_central: 'Administration Centrale',
+  dsi: 'Direction des Systèmes Informatiques (DSI)',
+  dsa: 'Direction des Services Aval',
+  inspecteurs: 'Inspecteurs SONAP',
+  importation: 'Direction Importation / Approvisionnement',
+  entreprises: 'Siège Entreprise',
 };
 
 const roleTheme: Record<AppRole, { color: string; bg: string; border: string; iconColor: string }> = {
   super_admin: { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', iconColor: 'text-indigo-600' },
-  admin_etat: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', iconColor: 'text-blue-600' },
   directeur_general: { color: 'text-slate-900', bg: 'bg-slate-100', border: 'border-slate-300', iconColor: 'text-slate-900' },
   directeur_adjoint: { color: 'text-slate-800', bg: 'bg-slate-50', border: 'border-slate-200', iconColor: 'text-slate-800' },
-  secretariat_direction: { color: 'text-blue-800', bg: 'bg-blue-100', border: 'border-blue-300', iconColor: 'text-blue-700' },
+  admin_etat: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', iconColor: 'text-blue-600' },
   directeur_aval: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', iconColor: 'text-emerald-600' },
   directeur_adjoint_aval: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', iconColor: 'text-emerald-600' },
   chef_division_distribution: { color: 'text-emerald-600', bg: 'bg-emerald-50/80', border: 'border-emerald-200', iconColor: 'text-emerald-500' },
-  chef_service_aval: { color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-200', iconColor: 'text-teal-600' },
-  agent_technique_aval: { color: 'text-teal-600', bg: 'bg-teal-50/50', border: 'border-teal-100', iconColor: 'text-teal-500' },
+  chef_bureau_aval: { color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-200', iconColor: 'text-teal-600' },
+  agent_supervision_aval: { color: 'text-teal-600', bg: 'bg-teal-50/50', border: 'border-teal-100', iconColor: 'text-teal-500' },
   controleur_distribution: { color: 'text-teal-500', bg: 'bg-teal-50/30', border: 'border-teal-100/50', iconColor: 'text-teal-400' },
   technicien_support_dsa: { color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100', iconColor: 'text-emerald-500' },
   technicien_flux: { color: 'text-emerald-500', bg: 'bg-emerald-50/30', border: 'border-emerald-100/50', iconColor: 'text-emerald-400' },
   inspecteur: { color: 'text-lime-700', bg: 'bg-lime-50', border: 'border-lime-200', iconColor: 'text-lime-600' },
-  admin_central: { color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', iconColor: 'text-red-600' },
-  chef_regulation: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', iconColor: 'text-amber-600' },
-  analyste_regulation: { color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', iconColor: 'text-cyan-600' },
   service_it: { color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', iconColor: 'text-purple-600' },
-  directeur_juridique: { color: 'text-indigo-900', bg: 'bg-indigo-50', border: 'border-indigo-300', iconColor: 'text-indigo-800' },
-  juriste: { color: 'text-indigo-700', bg: 'bg-indigo-50/50', border: 'border-indigo-100', iconColor: 'text-indigo-600' },
-  charge_conformite: { color: 'text-indigo-600', bg: 'bg-indigo-50/30', border: 'border-indigo-100/50', iconColor: 'text-indigo-500' },
-  assistant_juridique: { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', iconColor: 'text-slate-500' },
+  responsable_entreprise: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', iconColor: 'text-amber-600' },
+  secretaire_general: { color: 'text-blue-800', bg: 'bg-blue-100', border: 'border-blue-300', iconColor: 'text-blue-700' },
+  responsable_stations: { color: 'text-amber-700', bg: 'bg-amber-100', border: 'border-amber-300', iconColor: 'text-amber-600' },
+  gestionnaire_livraisons: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', iconColor: 'text-orange-600' },
+  operateur_entreprise: { color: 'text-amber-600', bg: 'bg-amber-50/50', border: 'border-amber-100', iconColor: 'text-amber-500' },
+
   directeur_importation: { color: 'text-indigo-900', bg: 'bg-indigo-50', border: 'border-indigo-300', iconColor: 'text-indigo-800' },
-  chef_service_importation: { color: 'text-indigo-800', bg: 'bg-indigo-50/80', border: 'border-indigo-200', iconColor: 'text-indigo-700' },
-  agent_suivi_cargaison: { color: 'text-indigo-700', bg: 'bg-indigo-50/50', border: 'border-indigo-100', iconColor: 'text-indigo-600' },
-  agent_reception_port: { color: 'text-blue-700', bg: 'bg-blue-50/50', border: 'border-blue-100', iconColor: 'text-blue-600' },
-  analyste_approvisionnement: { color: 'text-cyan-700', bg: 'bg-cyan-50/50', border: 'border-cyan-100', iconColor: 'text-cyan-600' },
-  agent_reception: { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-100', iconColor: 'text-indigo-500' },
-  analyste: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-100', iconColor: 'text-blue-500' },
-  responsable_entreprise: { color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-100', iconColor: 'text-teal-500' },
-  gestionnaire_station: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-100', iconColor: 'text-orange-500' },
-  superviseur_aval: { color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-100', iconColor: 'text-rose-500' },
-  personnel_admin: { color: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-100', iconColor: 'text-gray-500' },
-  directeur_financier: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100', iconColor: 'text-emerald-500' },
-  gestionnaire: { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-100', iconColor: 'text-slate-500' },
-  directeur_administratif: { color: 'text-violet-900', bg: 'bg-violet-50', border: 'border-violet-300', iconColor: 'text-violet-800' },
-  chef_service_administratif: { color: 'text-violet-700', bg: 'bg-violet-50/50', border: 'border-violet-100', iconColor: 'text-violet-600' },
-  gestionnaire_documentaire: { color: 'text-violet-500', bg: 'bg-violet-50/20', border: 'border-violet-100/30', iconColor: 'text-violet-400' },
-  directeur_logistique: { color: 'text-sky-900', bg: 'bg-sky-50', border: 'border-sky-300', iconColor: 'text-sky-800' },
-  agent_logistique: { color: 'text-sky-700', bg: 'bg-sky-50/50', border: 'border-sky-100', iconColor: 'text-sky-600' },
-  responsable_depots: { color: 'text-sky-600', bg: 'bg-sky-50/30', border: 'border-sky-100/50', iconColor: 'text-sky-500' },
-  responsable_transport: { color: 'text-sky-600', bg: 'bg-sky-50/30', border: 'border-sky-100/50', iconColor: 'text-sky-500' },
-  operateur_logistique: { color: 'text-sky-500', bg: 'bg-sky-50/20', border: 'border-sky-100/30', iconColor: 'text-sky-400' },
-  technicien_aval: { color: 'text-emerald-600', bg: 'bg-emerald-50/30', border: 'border-emerald-100/50', iconColor: 'text-emerald-500' },
+  agent_importation: { color: 'text-indigo-700', bg: 'bg-indigo-50/50', border: 'border-indigo-100', iconColor: 'text-indigo-600' },
+  responsable_stock: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', iconColor: 'text-emerald-600' },
+  agent_station: { color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100', iconColor: 'text-emerald-500' },
+  technicien_aval: { color: 'text-emerald-500', bg: 'bg-emerald-50/30', border: 'border-emerald-100', iconColor: 'text-emerald-400' },
 };
 
 const DEFAULT_THEME = { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200', iconColor: 'text-slate-600' };
@@ -137,7 +126,7 @@ export default function UtilisateursPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentUserRole]);
+  }, [currentUserRole, currentUserProfile?.entreprise_id]);
 
   const fetchUsers = async () => {
     try {
@@ -153,8 +142,12 @@ export default function UtilisateursPage() {
 
       // Fetch user roles
       const { data: roles } = await supabase.from('user_roles').select('user_id, role');
+      const { data: ents } = await supabase.from('entreprises').select('id, nom');
+      const { data: stats } = await supabase.from('stations').select('id, nom');
 
       const roleMap = new Map((roles || []).map(r => [r.user_id, r.role]));
+      const entMap = new Map((ents || []).map(e => [e.id, e.nom]));
+      const statMap = new Map((stats || []).map(s => [s.id, s.nom]));
 
       const usersWithDetails: UserWithDetails[] = (profiles as any[] || []).map(p => ({
         id: p.id,
@@ -165,6 +158,10 @@ export default function UtilisateursPage() {
         phone: p.phone || undefined,
         created_at: p.created_at,
         role: roleMap.get(p.user_id) as AppRole | undefined,
+        entreprise_id: p.entreprise_id || undefined,
+        entreprise_nom: entMap.get(p.entreprise_id),
+        station_id: p.station_id || undefined,
+        station_nom: statMap.get(p.station_id),
         organisation: p.organisation || undefined,
         direction: p.direction || undefined,
         poste: p.poste || undefined,
@@ -175,6 +172,7 @@ export default function UtilisateursPage() {
         prefecture: p.prefecture || undefined,
         commune: p.commune || undefined,
         force_password_change: p.force_password_change || false,
+        statut: (p.statut as 'inactif' | 'actif' | 'suspendu') || 'actif',
       }));
 
       setUsers(usersWithDetails);
@@ -187,23 +185,22 @@ export default function UtilisateursPage() {
 
   const filteredUsers = users.filter(user => {
     // 1. Security/Privacy Filter: Users only see what concerns them
-    if (currentUserRole === 'directeur_aval' || currentUserRole === 'directeur_adjoint_aval' || currentUserRole === 'chef_division_distribution') {
+    if (currentUserRole === 'responsable_entreprise') {
+      // Les responsables d'entreprise ne voient que leur personnel
+      if (user.entreprise_id !== currentUserProfile?.entreprise_id) return false;
+    } else if (currentUserRole === 'directeur_aval' || currentUserRole === 'directeur_adjoint_aval' || currentUserRole === 'chef_division_distribution') {
       // La DSA voit le terrain et les entreprises, mais pas le top management SONAP ou la DSI
       const sensitiveRoles: AppRole[] = ['super_admin', 'service_it', 'directeur_general', 'directeur_adjoint', 'admin_etat'];
       if (user.role && sensitiveRoles.includes(user.role)) return false;
-    } else if (currentUserRole === 'directeur_juridique') {
-      // Le Juridique voit son pôle
-      const jurRoles: AppRole[] = ['directeur_juridique', 'juriste', 'charge_conformite', 'assistant_juridique'];
-      if (user.role && !jurRoles.includes(user.role)) return false;
     } else if (currentUserRole === 'directeur_importation') {
       // L'Import voit son pôle
-      const impRoles: AppRole[] = ['directeur_importation', 'agent_suivi_cargaison'];
+      const impRoles: AppRole[] = ['directeur_importation', 'agent_importation'];
       if (user.role && !impRoles.includes(user.role)) return false;
     }
 
     const matchesSearch =
-      (user.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.email || '').toLowerCase().includes(searchQuery.toLowerCase());
+      user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = selectedRole === 'all' || user.role === selectedRole || (selectedRole === 'none' && !user.role);
     return matchesSearch && matchesRole;
   });
@@ -222,7 +219,6 @@ export default function UtilisateursPage() {
     currentUserRole === 'directeur_aval' || 
     currentUserRole === 'directeur_adjoint_aval' ||
     currentUserRole === 'service_it' ||
-    currentUserRole === 'directeur_juridique' ||
     currentUserRole === 'directeur_importation';
 
   const handleEdit = (user: UserWithDetails) => {
@@ -253,12 +249,60 @@ export default function UtilisateursPage() {
     }
   };
 
+  // Activation manuelle d'un compte inactif (DSI / Super Admin uniquement)
+  const canActivateAccounts = currentUserRole === 'super_admin' || currentUserRole === 'service_it';
+
+  const handleActivateUser = async (userId: string, name: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ statut: 'actif' } as any)
+        .eq('user_id', userId);
+      if (error) throw error;
+      toast({
+        title: 'Compte activé ✅',
+        description: `Le compte de ${name} est maintenant actif. L'utilisateur peut se connecter.`,
+      });
+      fetchUsers();
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur d\'activation',
+        description: err.message || 'Impossible d\'activer le compte',
+      });
+    }
+  };
+
+  const pendingCount = users.filter(u => u.statut === 'inactif').length;
+
   return (
     <DashboardLayout
       title="Gestion des Utilisateurs"
       subtitle="Contrôle des accès et hiérarchie de la plateforme"
     >
       <div className="space-y-8">
+
+        {/* Bandeau d'alerte - Comptes en attente d'activation */}
+        {canActivateAccounts && pendingCount > 0 && (
+          <div className="flex items-center justify-between gap-4 px-5 py-3.5 rounded-xl bg-orange-50 border-2 border-orange-200 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-orange-500 flex items-center justify-center shadow-md">
+                <UserCheck className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-orange-700">
+                  {pendingCount} compte{pendingCount > 1 ? 's' : ''} en attente d'activation
+                </p>
+                <p className="text-[11px] text-orange-500">
+                  Ces utilisateurs ne peuvent pas se connecter tant que leur compte n'est pas activé manuellement.
+                </p>
+              </div>
+            </div>
+            <Badge className="bg-orange-500 text-white border-orange-600 font-black text-sm px-3 py-1">
+              {pendingCount}
+            </Badge>
+          </div>
+        )}
         {/* Top Branding Section */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="md:col-span-1 bg-gradient-to-br from-slate-900 to-slate-800 border-none text-white relative overflow-hidden group">
@@ -302,16 +346,16 @@ export default function UtilisateursPage() {
               </CardContent>
             </Card>
 
-            <Card className="hover:border-primary/50 transition-all cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm" onClick={() => setSelectedRole('admin_central')}>
+            <Card className="hover:border-primary/50 transition-all cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm" onClick={() => setSelectedRole('responsable_entreprise')}>
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
-                  <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-800">
+                  <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 border border-orange-100 dark:border-orange-800">
                     <Fuel className="h-4 w-4" />
                   </div>
-                  <Badge variant="outline" className="text-[10px] border-red-200 text-red-700 bg-red-50/50">RÉG</Badge>
+                  <Badge variant="outline" className="text-[10px] border-orange-200 text-orange-700 bg-orange-50/50">TERRAIN</Badge>
                 </div>
-                <p className="text-2xl font-black">{(usersByRole['admin_central'] || 0) + (usersByRole['chef_regulation'] || 0) + (usersByRole['analyste_regulation'] || 0)}</p>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">Régulation</p>
+                <p className="text-2xl font-black">{(usersByRole['responsable_entreprise'] || 0) + (usersByRole['operateur_entreprise'] || 0)}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">Entreprises</p>
               </CardContent>
             </Card>
 
@@ -323,7 +367,7 @@ export default function UtilisateursPage() {
                   </div>
                   <Badge variant="outline" className="text-[10px] border-blue-200 text-blue-700 bg-blue-50/50">SONAP</Badge>
                 </div>
-                <p className="text-2xl font-black">{(usersByRole['directeur_general'] || 0) + (usersByRole['directeur_adjoint'] || 0) + (usersByRole['admin_etat'] || 0) + (usersByRole['directeur_juridique'] || 0) + (usersByRole['directeur_importation'] || 0)}</p>
+                <p className="text-2xl font-black">{(usersByRole['directeur_general'] || 0) + (usersByRole['directeur_adjoint'] || 0) + (usersByRole['admin_etat'] || 0) + (usersByRole['directeur_importation'] || 0)}</p>
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">Management & Directions</p>
               </CardContent>
             </Card>
@@ -465,15 +509,12 @@ export default function UtilisateursPage() {
                           {user.role ? ROLE_LABELS[user.role] : 'Non défini'}
                         </Badge>
                         <span className="text-slate-300 dark:text-slate-700">•</span>
-                        <p className="text-xs text-slate-500 font-medium truncate">
-                          {maskIfUnauthorized(user.email, currentUserRole, 'email')}
+                        <p className="text-xs text-slate-500 font-medium truncate" title={user.email}>
+                          {(currentUserRole === 'super_admin' || currentUserRole === 'service_it' || user.user_id === currentUserProfile?.user_id) 
+                            ? user.email 
+                            : maskEmail(user.email)}
                         </p>
                       </div>
-                      {user.phone && (
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          {maskIfUnauthorized(user.phone, currentUserRole, 'phone')}
-                        </p>
-                      )}
                     </div>
 
                     <div className="flex flex-col gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
@@ -491,23 +532,62 @@ export default function UtilisateursPage() {
                         </div>
                       )}
 
-                        {(!user.organisation) && (
+                      <div className="grid grid-cols-1 gap-2">
+                        {user.entreprise_nom && (
+                          <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700 w-fit max-w-full">
+                            <Building2 className="h-3 w-3 text-slate-400" />
+                            <span className="truncate">{user.entreprise_nom}</span>
+                          </div>
+                        )}
+                        {user.station_nom && (
+                          <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700 w-fit max-w-full">
+                            <Fuel className="h-3 w-3 text-slate-400" />
+                            <span className="truncate">{user.station_nom}</span>
+                          </div>
+                        )}
+                        {(!user.organisation && !user.entreprise_nom && !user.station_nom) && (
                           <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 italic">
                             <AlertCircle className="h-3 w-3 opacity-50" />
                             Aucune affectation
                           </div>
                         )}
+                      </div>
                     </div>
                   </CardContent>
                   
                   <div className="bg-slate-50 dark:bg-slate-800/20 px-6 py-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <div className="flex items-center gap-1.5">
-                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Compte vérifié</span>
+                      {user.statut === 'inactif' ? (
+                        <>
+                          <div className="h-1.5 w-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
+                          <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">En attente d'activation</span>
+                        </>
+                      ) : user.statut === 'suspendu' ? (
+                        <>
+                          <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                          <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Compte suspendu</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Compte actif</span>
+                        </>
+                      )}
                     </div>
-                    <span className="text-[10px] font-medium text-slate-400">
-                      ID: {user.user_id.slice(0, 8)}...
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-medium text-slate-400">
+                        ID: {user.user_id.slice(0, 8)}...
+                      </span>
+                      {user.statut === 'inactif' && canActivateAccounts && (
+                        <Button
+                          size="sm"
+                          className="h-6 text-[10px] uppercase font-bold tracking-wider px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => handleActivateUser(user.user_id, user.full_name)}
+                        >
+                          Activer
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
               );
@@ -558,12 +638,9 @@ export default function UtilisateursPage() {
                          role === 'directeur_aval' ? 'from-emerald-500 to-emerald-700' :
                          role === 'directeur_adjoint_aval' ? 'from-emerald-500 to-emerald-700' :
                          role === 'chef_division_distribution' ? 'from-emerald-400 to-emerald-600' :
-                         role === 'chef_service_aval' ? 'from-teal-500 to-teal-700' :
-                         role === 'agent_technique_aval' ? 'from-teal-400 to-teal-600' :
+                         role === 'chef_bureau_aval' ? 'from-teal-500 to-teal-700' :
+                         role === 'agent_supervision_aval' ? 'from-teal-400 to-teal-600' :
                          role === 'inspecteur' ? 'from-lime-500 to-lime-700' :
-                         role === 'admin_central' ? 'from-red-500 to-red-700' :
-                         role === 'chef_regulation' ? 'from-amber-500 to-amber-700' :
-                         role === 'analyste_regulation' ? 'from-cyan-500 to-cyan-700' :
                          role === 'service_it' ? 'from-purple-500 to-purple-700' :
                         'from-amber-500 to-amber-700'
                       )}>
@@ -604,6 +681,8 @@ export default function UtilisateursPage() {
           sexe: userToEdit.sexe,
           date_naissance: userToEdit.date_naissance,
           matricule: userToEdit.matricule,
+          entreprise_id: userToEdit.entreprise_id,
+          station_id: userToEdit.station_id,
           organisation: userToEdit.organisation,
           direction: userToEdit.direction,
           poste: userToEdit.poste,

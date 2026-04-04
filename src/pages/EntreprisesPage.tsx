@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search, Plus, Loader2, Upload } from 'lucide-react';
+import { Search, Plus, Loader2, Upload, CheckCircle2, XCircle, Clock, Shield } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { EntrepriseCard } from '@/components/entreprises/EntrepriseCard';
 import { REGIONS } from '@/lib/constants';
@@ -43,17 +42,12 @@ export default function EntreprisesPage() {
   const [saving, setSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedStatut, setSelectedStatut] = useState<string>('all');
 
-  useEffect(() => {
-    if (searchParams.get('create') === 'true') {
-      setIsDialogOpen(true);
-      // Clean up the URL to avoid re-opening on refresh
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('create');
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [searchParams, setSearchParams]);
+  // Rôles Admin Central qui peuvent valider
+  const isAdminCentral = ['super_admin', 'admin_etat', 'directeur_general', 'directeur_adjoint'].includes(currentUserRole || '');
+  // Rôles DSA qui créent (avec validation requise)
+  const isDSA = ['directeur_aval', 'directeur_adjoint_aval'].includes(currentUserRole || '');
 
   const [formData, setFormData] = useState<{
     nom: string;
@@ -64,6 +58,8 @@ export default function EntreprisesPage() {
     contactNom: string;
     contactTelephone: string;
     contactEmail: string;
+    quota_essence: number;
+    quota_gasoil: number;
   }>({
     nom: '',
     sigle: '',
@@ -73,6 +69,8 @@ export default function EntreprisesPage() {
     contactNom: '',
     contactTelephone: '',
     contactEmail: '',
+    quota_essence: 0,
+    quota_gasoil: 0,
   });
 
   const localLogoMapping: Record<string, string> = {
@@ -171,7 +169,8 @@ export default function EntreprisesPage() {
       e.sigle.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRegion = selectedRegion === 'all' || e.region === selectedRegion;
     const matchesType = selectedType === 'all' || e.type === selectedType;
-    return matchesSearch && matchesRegion && matchesType;
+    const matchesStatut = selectedStatut === 'all' || e.statut === selectedStatut;
+    return matchesSearch && matchesRegion && matchesType && matchesStatut;
   });
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,18 +245,20 @@ export default function EntreprisesPage() {
         type: formData.type,
         numero_agrement: numeroAgrement,
         region: formData.region,
-        statut: 'actif',
+        statut: isDSA ? 'attente_validation' : 'actif',
         logo_url: logoUrl,
         contact_nom: formData.contactNom.trim() || null,
         contact_telephone: formData.contactTelephone.trim() || null,
         contact_email: formData.contactEmail.trim() || null,
+        quota_essence: formData.quota_essence || 0,
+        quota_gasoil: formData.quota_gasoil || 0,
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Succès',
-        description: `${formData.nom} a été créée avec succès.`,
+        title: isDSA ? 'Demande envoyée' : 'Succès',
+        description: isDSA ? `${formData.nom} a été créée et est en attente de validation par l'Administration Centrale.` : `${formData.nom} a été créée avec succès.`,
       });
 
       setFormData({
@@ -269,6 +270,8 @@ export default function EntreprisesPage() {
         contactNom: '',
         contactTelephone: '',
         contactEmail: '',
+        quota_essence: 0,
+        quota_gasoil: 0,
       });
       setLogoFile(null);
       setLogoPreview(null);
@@ -282,6 +285,36 @@ export default function EntreprisesPage() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleValidateEntreprise = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('entreprises')
+        .update({ statut: 'actif' })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: 'Entreprise validée', description: 'L\'entreprise est maintenant active.' });
+      await fetchEntreprises();
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: err.message });
+    }
+  };
+
+  const handleRejectEntreprise = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('entreprises')
+        .update({ statut: 'ferme' })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: 'Demande rejetée', description: 'L\'entreprise a été rejetée.' });
+      await fetchEntreprises();
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: err.message });
     }
   };
 
@@ -325,6 +358,19 @@ export default function EntreprisesPage() {
           </SelectContent>
         </Select>
 
+        <Select value={selectedStatut} onValueChange={setSelectedStatut}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les statuts</SelectItem>
+            <SelectItem value="actif">Actif</SelectItem>
+            <SelectItem value="attente_validation">En attente de validation</SelectItem>
+            <SelectItem value="suspendu">Suspendu</SelectItem>
+            <SelectItem value="ferme">Fermé / Rejeté</SelectItem>
+          </SelectContent>
+        </Select>
+
         {canManageEntreprises && (
           <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -348,6 +394,13 @@ export default function EntreprisesPage() {
         </div>
         <div className="h-10 w-px bg-border" />
         <div>
+          <p className="text-sm text-muted-foreground">En attente</p>
+          <p className="text-2xl font-bold text-amber-500">
+            {entreprises.filter(e => e.statut === 'attente_validation').length}
+          </p>
+        </div>
+        <div className="h-10 w-px bg-border" />
+        <div>
           <p className="text-sm text-muted-foreground">Stations totales</p>
           <p className="text-2xl font-bold">
             {filteredEntreprises.reduce((sum, e) => sum + e.nombreStations, 0)}
@@ -364,7 +417,38 @@ export default function EntreprisesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredEntreprises.map(entreprise => (
-            <EntrepriseCard key={entreprise.id} entreprise={entreprise} />
+            <div key={entreprise.id} className="relative">
+              {entreprise.statut === 'attente_validation' && (
+                <div className="absolute -top-2 -right-2 z-10">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                    <Clock className="h-3 w-3" />
+                    En attente
+                  </span>
+                </div>
+              )}
+              <EntrepriseCard entreprise={entreprise} />
+              {entreprise.statut === 'attente_validation' && isAdminCentral && (
+                <div className="flex gap-2 mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                    onClick={() => handleValidateEntreprise(entreprise.id)}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Valider
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="flex-1 gap-1 font-bold text-xs"
+                    onClick={() => handleRejectEntreprise(entreprise.id)}
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    Rejeter
+                  </Button>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -471,14 +555,18 @@ export default function EntreprisesPage() {
                 </div>
               </div>
 
-              {/* Agrément */}
+              {/* Agrément — Auto-généré */}
               <div className="space-y-2">
-                <Label>N° agrément</Label>
-                <Input
-                  value={formData.numeroAgrement}
-                  onChange={e => setFormData({ ...formData, numeroAgrement: e.target.value })}
-                  placeholder="Ex: AGR-2026-001"
-                />
+                <Label className="flex items-center gap-2">
+                  N° Agrément
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">
+                    ⚡ Auto
+                  </span>
+                </Label>
+                <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-dashed border-slate-300 bg-slate-50 text-slate-400">
+                  <span className="text-sm font-mono font-bold tracking-widest">ENT-{new Date().getFullYear()}-XXXX</span>
+                  <span className="text-[10px] text-slate-400 italic">· Généré automatiquement à la création</span>
+                </div>
               </div>
 
               {/* Contact */}
@@ -511,6 +599,25 @@ export default function EntreprisesPage() {
                 />
               </div>
 
+              {/* Quotas Initial */}
+              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                <div className="space-y-2">
+                  <Label className="text-emerald-700">Quota Essence (L) *</Label>
+                  <Input
+                    type="number"
+                    value={formData.quota_essence}
+                    onChange={e => setFormData({ ...formData, quota_essence: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-blue-700">Quota Gasoil (L) *</Label>
+                  <Input
+                    type="number"
+                    value={formData.quota_gasoil}
+                    onChange={e => setFormData({ ...formData, quota_gasoil: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

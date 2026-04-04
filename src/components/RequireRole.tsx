@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from "@/contexts/AuthContext";
-import { AppRole } from '@/types';
+import { useAuth, AppRole } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,7 +11,7 @@ export function RequireRole({ allowedRoles }: RequireRoleProps) {
     const { user, role, loading, getDashboardRoute } = useAuth();
     const location = useLocation();
 
-    if (loading) {
+    if (loading && !user) {
         return (
             <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
                 <div className="flex flex-col items-center gap-4">
@@ -28,8 +27,8 @@ export function RequireRole({ allowedRoles }: RequireRoleProps) {
     }
 
     if (!role) {
-        console.warn("[RequireRole] No role found for authorized user, redirecting to /auth");
-        // Best practice: if they are authenticated but have no role, they shouldn't be in the app
+        // User is logged in but has no role - we sign them out instead of showing an error page
+        // This is more professional as requested
         supabase.auth.signOut();
         return <Navigate to="/auth" state={{ from: location }} replace />;
     }

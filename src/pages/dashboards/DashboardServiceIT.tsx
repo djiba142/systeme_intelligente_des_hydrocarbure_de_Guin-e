@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     Server, Shield, Users, Settings, Activity, Database,
     Key, RefreshCw, CheckCircle2, AlertTriangle, Lock,
     Monitor, HardDrive, Terminal, Wifi, Clock, Search,
-    Cpu, Zap, ShieldCheck, Bug, LogOut, ChevronRight, FolderOpen
+    Cpu, Zap, ShieldCheck, Bug, LogOut, ChevronRight
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -16,8 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { notifyStationStatusUpdate } from '@/lib/notifications';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_LABELS, AppRole } from '@/types/roles';
+import { ROLE_LABELS, AppRole, useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -49,13 +47,11 @@ interface SystemLog {
 export default function DashboardServiceIT() {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [userRoles, setUserRoles] = useState<UserRoleRow[]>([]);
+    const [auditLogs, setAuditLogs] = useState<SystemLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSavingConfig, setIsSavingConfig] = useState(false);
     const [isBackingUp, setIsBackingUp] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [pendingStations, setPendingStations] = useState<any[]>([]);
-    const [auditLogs, setAuditLogs] = useState<any[]>([]);
-    const navigate = useNavigate();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -64,19 +60,34 @@ export default function DashboardServiceIT() {
                 supabase.from('profiles').select('*').order('created_at', { ascending: false }),
                 supabase.from('user_roles').select('*'),
                 supabase.from('stations').select('*, entreprise:entreprises(nom)').eq('statut', 'attente_dsi'),
-                (supabase as any).from('audit_logs').select('*').order('created_at', { ascending: false }).limit(20)
+                supabase.from('audit_logs' as any).select('*').order('created_at', { ascending: false }).limit(20)
             ]);
 
             setUsers((usersRes.data || []) as UserProfile[]);
             setUserRoles((rolesRes.data || []) as UserRoleRow[]);
             setPendingStations(stationsRes.data || []);
-            setAuditLogs(logsRes.data || []);
+            
+            const rawLogs = logsRes.data || [];
+            const formattedLogs: SystemLog[] = rawLogs.map((log: any) => ({
+                id: log.id,
+                source: log.resource_type || 'Système',
+                action: `${log.action_type || 'ACTION'}: ${log.resource_name || ''}`.trim(),
+                user: log.user_email || log.user_id || 'Inconnu',
+                timestamp: new Date(log.created_at).toLocaleString('fr-FR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                }),
+                level: log.action_type === 'DELETE' ? 'error' : (log.action_type === 'UPDATE' ? 'warning' : 'info')
+            }));
+            setAuditLogs(formattedLogs);
         } catch (error) {
             console.error('Error:', error);
         } finally {
             setLoading(false);
         }
     }, []);
+
+    const [pendingStations, setPendingStations] = useState<any[]>([]);
 
     const handleActivateStation = async (station: any) => {
         try {
@@ -109,13 +120,14 @@ export default function DashboardServiceIT() {
     };
 
     const handleSuspendUser = async (profileId: string, currentStatut: string) => {
-        const newStatut = currentStatut === 'suspendu' ? 'actif' : 'suspendu';
+        // inactif -> actif (activation), suspendu -> actif (réactivation), actif -> suspendu
+        const newStatut = currentStatut === 'actif' ? 'suspendu' : 'actif';
         try {
             const { error } = await supabase.from('profiles').update({ statut: newStatut } as any).eq('id', profileId);
             if (error) throw error;
             fetchData();
         } catch (error) {
-            console.error('Error suspending user:', error);
+            console.error('Error updating user status:', error);
         }
     };
 
@@ -152,8 +164,8 @@ export default function DashboardServiceIT() {
     const filteredUsers = useMemo(() => {
         return users.filter(u =>
             !searchQuery ||
-            (u.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (u.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+            u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [users, searchQuery]);
 
@@ -166,31 +178,7 @@ export default function DashboardServiceIT() {
         { name: 'Realtime', status: 'operational', uptime: 99.5 },
     ];
 
-    const logs: SystemLog[] = (auditLogs || []).map((log: any) => {
-      let level: 'info' | 'warning' | 'error' | 'success' = 'info';
-      const actionName = (log?.action_type || log?.action || '').toLowerCase();
-      
-      if (actionName.includes('fail') || actionName.includes('error') || log?.status === 'failed') level = 'error';
-      else if (actionName.includes('warning') || actionName.includes('concurrent') || actionName.includes('delete')) level = 'warning';
-      else level = 'success';
-
-      let formattedDate = '-';
-      try {
-        if (log?.created_at) {
-          const d = new Date(log.created_at);
-          formattedDate = isNaN(d.getTime()) ? '-' : d.toLocaleString('fr-FR');
-        }
-      } catch { formattedDate = '-'; }
-
-      return {
-        id: log?.id || String(Math.random()),
-        source: log?.resource_type || log?.module || 'System',
-        action: log?.action_type || log?.action || 'INCONNU',
-        user: log?.user_email || (log?.user_id ? String(log.user_id).substring(0,8) + '...' : 'System'),
-        timestamp: formattedDate,
-        level,
-      };
-    });
+    // L'état `auditLogs` remplace l'ancienne constante statique `logs`.
 
     const roleLabels = ROLE_LABELS;
 
@@ -244,10 +232,6 @@ export default function DashboardServiceIT() {
                         <TabsTrigger value="logs" className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
                             <Terminal className="h-4 w-4" />
                             Logs Système
-                        </TabsTrigger>
-                        <TabsTrigger value="workflow" className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-indigo-600 font-bold" onClick={() => navigate('/dossiers')}>
-                            <FolderOpen className="h-4 w-4" />
-                            Workflow Dossiers
                         </TabsTrigger>
                         <TabsTrigger value="backups" className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
                             <Database className="h-4 w-4" />
@@ -412,6 +396,11 @@ export default function DashboardServiceIT() {
                                                     )} variant="outline">
                                                         {roleLabels[getUserRole(u.user_id) as AppRole] || getUserRole(u.user_id)}
                                                     </Badge>
+                                                    {(u.statut === 'inactif' || (u as any).statut === 'inactif') && (
+                                                      <Badge className="ml-1 text-[9px] font-black uppercase bg-orange-100 text-orange-600 border-orange-200" variant="outline">
+                                                        En attente
+                                                      </Badge>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 px-6 text-right">
                                                     <div className="flex items-center justify-end gap-2">
@@ -427,11 +416,16 @@ export default function DashboardServiceIT() {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className={cn("h-8 gap-2 text-xs", u.statut === 'suspendu' ? "text-amber-600" : "text-slate-600")}
+                                                            className={cn(
+                                                              "h-8 gap-2 text-xs",
+                                                              u.statut === 'actif'
+                                                                ? "text-slate-600 hover:bg-slate-50"
+                                                                : "text-emerald-600 hover:bg-emerald-50 font-bold"
+                                                            )}
                                                             onClick={() => handleSuspendUser(u.id, u.statut || 'actif')}
                                                         >
                                                             <Lock className="h-3.5 w-3.5" />
-                                                            {u.statut === 'suspendu' ? 'Activer' : 'Suspendre'}
+                                                            {u.statut === 'actif' ? 'Suspendre' : 'Activer'}
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
@@ -525,10 +519,13 @@ export default function DashboardServiceIT() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-0 bg-slate-950 font-mono text-[12px]">
-                            <div className="divide-y divide-slate-900">
-                                {logs.map(log => (
+                            <div className="divide-y divide-slate-900 overflow-auto max-h-[350px]">
+                                {auditLogs.length === 0 && (
+                                    <div className="p-6 text-center text-slate-500 italic">Aucun log trouvé</div>
+                                )}
+                                {auditLogs.map(log => (
                                     <div key={log.id} className="flex items-center gap-4 px-6 py-3 hover:bg-slate-900/50 transition-colors">
-                                        <span className="text-slate-500 min-w-[80px]">{log.timestamp}</span>
+                                        <span className="text-slate-500 min-w-[120px]">{log.timestamp}</span>
                                         <Badge className={cn("h-5 min-w-[80px] justify-center text-[10px]",
                                             log.level === 'error' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
                                                 log.level === 'warning' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
@@ -536,8 +533,8 @@ export default function DashboardServiceIT() {
                                         )} variant="outline">
                                             {log.source.toUpperCase()}
                                         </Badge>
-                                        <span className="text-slate-300 flex-1">{log.action}</span>
-                                        <span className="text-slate-500 italic text-[10px]">{log.user}</span>
+                                        <span className="text-slate-300 flex-1 truncate">{log.action}</span>
+                                        <span className="text-slate-500 italic text-[10px] min-w-[150px] truncate" title={log.user}>{log.user}</span>
                                     </div>
                                 ))}
                             </div>

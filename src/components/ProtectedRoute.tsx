@@ -1,14 +1,6 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { AppRole } from '@/types';
-import { useState, useEffect } from 'react';
-import { 
-  getPublicIP, 
-  isIpAllowed, 
-  ADMIN_ROLES_SUBJECT_TO_IP_WHIELISTS, 
-  IS_IP_WHITELIST_ENABLED 
-} from '@/lib/ipWhitelisting';
+import { useAuth, AppRole } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -16,43 +8,9 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, loading: authLoading, canAccess, role } = useAuth();
-  const [ipLoading, setIpLoading] = useState(IS_IP_WHITELIST_ENABLED);
-  const [ipDenied, setIpDenied] = useState(false);
+  const { user, loading, canAccess, mfaSetupRequired, mfaVerificationRequired } = useAuth();
 
-  useEffect(() => {
-    if (!IS_IP_WHITELIST_ENABLED || !user || !role) {
-      setIpLoading(false);
-      return;
-    }
-
-    // Only apply IP whitelisting to administrative roles
-    if (!ADMIN_ROLES_SUBJECT_TO_IP_WHIELISTS.includes(role)) {
-      setIpLoading(false);
-      return;
-    }
-
-    // Check if IP is already verified in this session
-    const isIpVerified = sessionStorage.getItem('sihg_ip_verified');
-    if (isIpVerified === 'true') {
-      setIpLoading(false);
-      return;
-    }
-
-    async function verifyIp() {
-      const ip = await getPublicIP();
-      if (!isIpAllowed(ip)) {
-        setIpDenied(true);
-      } else {
-        sessionStorage.setItem('sihg_ip_verified', 'true');
-      }
-      setIpLoading(false);
-    }
-
-    verifyIp();
-  }, [user, role]);
-
-  if (authLoading || ipLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -61,10 +19,6 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
         </div>
       </div>
     );
-  }
-
-  if (ipDenied) {
-    return <Navigate to="/ip-denied" replace />;
   }
 
   if (!user) {
@@ -78,6 +32,15 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   if (requiredRole && !canAccess(requiredRole)) {
     return <Navigate to="/acces-refuse" replace />;
+  }
+
+  // ==== BLOCAGE MFA ====
+  if (mfaSetupRequired) {
+    return <Navigate to="/auth?mfa=setup" replace />;
+  }
+
+  if (mfaVerificationRequired) {
+    return <Navigate to="/auth?mfa=verify" replace />;
   }
 
   return <>{children}</>;

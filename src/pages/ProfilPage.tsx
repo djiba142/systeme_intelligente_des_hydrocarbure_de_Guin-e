@@ -22,8 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
-import { ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/types/roles';
+import { useAuth, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/components/ThemeProvider';
@@ -67,9 +66,8 @@ export default function ProfilPage() {
     super_admin: 'from-indigo-500 to-indigo-700',
     admin_etat: 'from-blue-500 to-blue-700',
     inspecteur: 'from-teal-500 to-teal-700',
-    admin_central: 'from-red-600 to-red-800',
-    chef_regulation: 'from-amber-500 to-amber-700',
-    analyste_regulation: 'from-cyan-500 to-cyan-700',
+    service_it: 'from-purple-500 to-purple-700',
+    responsable_entreprise: 'from-amber-500 to-amber-700',
   };
 
   return (
