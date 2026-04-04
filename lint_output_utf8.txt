@@ -1,0 +1,339 @@
+﻿
+> vite_react_shadcn_ts@0.0.0 lint
+> eslint .
+
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\components\ThemeProvider.tsx
+  66:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\components\dashboard\DialogOrdresEtat.tsx
+   45:8   warning  React Hook useEffect has a missing dependency: 'fetchOrdres'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  130:25  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\components\dashboard\OrdreRavitaillementDialog.tsx
+  124:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\components\map\GuineaMap.tsx
+  159:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\components\notifications\NotificationCenter.tsx
+  73:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  90:77  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\components\users\CreateUserDialog.tsx
+   64:14   warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  235:26   error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  278:28   error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  286:9    error    Empty block statement                                                                                                           no-empty
+  517:101  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\contexts\AuthContext.tsx
+  332:28  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  478:26  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  484:55  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  491:59  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  502:58  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  570:70  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  577:30  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  578:65  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  677:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  685:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  719:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\hooks\useRealtimeAlertes.ts
+  32:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\hooks\useRealtimeStations.ts
+  34:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\lib\auditLog.ts
+   11:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  245:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  279:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\lib\excelExport.ts
+  93:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\lib\notifications.ts
+  11:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\lib\officialDocuments.ts
+   15:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\lib\pdfExport.ts
+   11:26  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   58:25  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  219:26  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  312:37  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  313:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  313:61  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  314:25  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  321:16  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  329:22  error  Promise executor functions should not be async  no-async-promise-executor
+  354:20  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  405:22  error  Promise executor functions should not be async  no-async-promise-executor
+  424:40  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  424:73  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  438:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  443:41  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  445:28  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  456:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  473:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  481:42  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  486:31  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  498:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  515:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  519:36  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  540:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  544:36  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  564:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  568:36  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  573:47  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  585:22  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\lib\utils.ts
+  8:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  8:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\AdminDossiersPage.tsx
+   36:82  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  648:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\AgentTerrainPage.tsx
+   53:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\AlertesPage.tsx
+  155:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  174:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  277:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\AuditPage.tsx
+   45:28   error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   72:6    warning  React Hook useEffect has a missing dependency: 'loadLogs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   92:19   error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  121:19   error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  377:101  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  378:80   error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\AuthPage.tsx
+   71:6   warning  React Hook useEffect has a missing dependency: 'getEffectiveRedirect'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  120:21  error    Unexpected any. Specify a different type                                                                                 @typescript-eslint/no-explicit-any
+  294:35  error    Unexpected any. Specify a different type                                                                                 @typescript-eslint/no-explicit-any
+  347:35  error    Unexpected any. Specify a different type                                                                                 @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\CartePage.tsx
+   39:40  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   40:38  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   85:56  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  132:25  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  133:22  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  145:52  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  151:23  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  152:20  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  178:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  431:47  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  437:27  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  437:35  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  439:38  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  493:81  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  494:19  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\EntrepriseDetailPage.tsx
+  136:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\EntrepriseInfoPage.tsx
+  106:6   warning  React Hook useEffect has missing dependencies: 'fetchEntrepriseInfo', 'isResponsable', and 'isSuperAdmin'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  130:19  error    Unexpected any. Specify a different type                                                                                                                       @typescript-eslint/no-explicit-any
+  177:43  error    Unexpected any. Specify a different type                                                                                                                       @typescript-eslint/no-explicit-any
+  219:19  error    Unexpected any. Specify a different type                                                                                                                       @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\EntreprisesPage.tsx
+  155:6   warning  React Hook useEffect has a missing dependency: 'fetchEntreprises'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  265:19  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\ImportationsPage.tsx
+   56:56   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:56   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   89:61   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:25   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:65   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:103  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  196:103  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:72   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  379:49   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\InspectionsPage.tsx
+   72:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\RapportsPage.tsx
+  217:6   warning  React Hook useEffect has missing dependencies: 'fetchEntrepriseLogo' and 'loadRecentReports'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  340:19  error    Unexpected any. Specify a different type                                                                                                          @typescript-eslint/no-explicit-any
+  352:39  error    Unexpected any. Specify a different type                                                                                                          @typescript-eslint/no-explicit-any
+  352:47  error    Unexpected any. Specify a different type                                                                                                          @typescript-eslint/no-explicit-any
+  361:17  error    Unexpected any. Specify a different type                                                                                                          @typescript-eslint/no-explicit-any
+  394:19  error    Unexpected any. Specify a different type                                                                                                          @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\StationDetailPage.tsx
+  102:42  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  103:40  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  104:48  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  105:40  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  121:6   warning  React Hook useEffect has missing dependencies: 'fetchAll' and 'fetchVentes'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  124:41  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  139:44  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  152:19  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  194:19  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\StationsPage.tsx
+  150:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  191:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  239:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  365:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  624:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\UtilisateursPage.tsx
+  125:6   warning  React Hook useEffect has a missing dependency: 'fetchUsers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  144:64  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  232:21  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\admin\OrdersPage.tsx
+  124:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\analyste\PrevisionsPage.tsx
+  181:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardAdminEtat.tsx
+   60:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardAdministratif.tsx
+   75:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardAnalyste.tsx
+   68:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  436:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardDSA.tsx
+   71:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   72:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardImportation.tsx
+   27:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   28:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   30:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  239:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  264:98  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  308:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardInspecteur.tsx
+  110:49  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  116:80  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  159:44  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  164:25  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  174:8   warning  React Hook useCallback has unnecessary dependencies: 'inspecteurLevel.region' and 'inspecteurLevel.restrict'. Either exclude them or remove the dependency array  react-hooks/exhaustive-deps
+  271:55  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  280:22  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  636:72  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardJuridique.tsx
+   90:50   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:41   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:19   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:21   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:24   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  373:114  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  373:146  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:47   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardLogistique.tsx
+   29:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   41:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   42:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   46:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  312:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  313:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  338:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  365:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  366:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  399:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardServiceIT.tsx
+   76:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   78:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:95  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Djiba Kourouma\Desktop\systeme_intelligente_des_hydrocarbure_de_Guin-e-main\src\pages\dashboards\DashboardSuperAdmin.tsx
+  164:46   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:50   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:28   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:28   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:28   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  510:38   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  576:171  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Ô£û 248 problems (233 errors, 15 warnings)
+
