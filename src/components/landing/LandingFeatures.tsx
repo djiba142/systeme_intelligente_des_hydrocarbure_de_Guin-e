@@ -82,7 +82,8 @@ export const LandingFeatures = () => {
                                 <img
                                     src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=75&w=1000&auto=format&fit=crop"
                                     alt="SIHG Intelligence Dashboard"
-                                    className="w-full h-auto transform group-hover:scale-105 transition-all duration-[2000ms] opacity-80 group-hover:opacity-100"
+                                    className="w-full h-auto transform group-hover:scale-105 transition-all opacity-80 group-hover:opacity-100"
+                                    style={{ transitionDuration: '2000ms' }}
                                     loading="lazy"
                                 />
                                 <div className="absolute bottom-10 left-10 right-10 z-20 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
